@@ -1,0 +1,418 @@
+{
+    "clock": {
+        "High": -1,
+        "Low": 0,
+        "Pin": "input",
+        "_": true
+    },
+    "io": {
+        "a2uregio": {
+            "axiRdCmdCnt": {
+                "High": 31,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "axiWrCmdCnt": {
+                "High": 31,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "readyStall": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "tokenCnt": {
+                "High": 7,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "uiRbCmdCnt": {
+                "High": 31,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "uiRdCmdCnt": {
+                "High": 31,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "uiWrCmdCnt": {
+                "High": 31,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            }
+        },
+        "ario": {
+            "araddr": {
+                "High": 35,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "arburst": {
+                "High": 1,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "arid": {
+                "High": 7,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "arlen": {
+                "High": 7,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "arqos": {
+                "High": 3,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "arready": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "arsize": {
+                "High": 3,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "aruser": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "arvalid": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            }
+        },
+        "awio": {
+            "awaddr": {
+                "High": 35,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "awburst": {
+                "High": 1,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "awid": {
+                "High": 7,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "awlen": {
+                "High": 7,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "awqos": {
+                "High": 3,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "awready": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "awsize": {
+                "High": 3,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "awuser": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "awvalid": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            }
+        },
+        "bio": {
+            "bid": {
+                "High": 7,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "bready": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "bresp": {
+                "High": 1,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "buser": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "bvalid": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            }
+        },
+        "rio": {
+            "rdata": {
+                "High": 255,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "rid": {
+                "High": 7,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "rlast": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "rready": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "rresp": {
+                "High": 1,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "ruser": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "rvalid": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            }
+        },
+        "ui": {
+            "ario": {
+                "bits": {
+                    "addr": {
+                        "High": 35,
+                        "Low": 0,
+                        "Pin": "output",
+                        "_": true
+                    },
+                    "pri": {
+                        "High": -1,
+                        "Low": 0,
+                        "Pin": "output",
+                        "_": true
+                    },
+                    "token": {
+                        "High": 9,
+                        "Low": 0,
+                        "Pin": "output",
+                        "_": true
+                    }
+                },
+                "ready": {
+                    "High": -1,
+                    "Low": 0,
+                    "Pin": "input",
+                    "_": true
+                },
+                "valid": {
+                    "High": -1,
+                    "Low": 0,
+                    "Pin": "output",
+                    "_": true
+                }
+            },
+            "awio": {
+                "bits": {
+                    "addr": {
+                        "High": 35,
+                        "Low": 0,
+                        "Pin": "output",
+                        "_": true
+                    },
+                    "pri": {
+                        "High": -1,
+                        "Low": 0,
+                        "Pin": "output",
+                        "_": true
+                    },
+                    "token": {
+                        "High": 9,
+                        "Low": 0,
+                        "Pin": "output",
+                        "_": true
+                    }
+                },
+                "ready": {
+                    "High": -1,
+                    "Low": 0,
+                    "Pin": "input",
+                    "_": true
+                },
+                "valid": {
+                    "High": -1,
+                    "Low": 0,
+                    "Pin": "output",
+                    "_": true
+                }
+            },
+            "rio": {
+                "bits": {
+                    "rdata": {
+                        "High": 511,
+                        "Low": 0,
+                        "Pin": "input",
+                        "_": true
+                    },
+                    "rtoken": {
+                        "High": 9,
+                        "Low": 0,
+                        "Pin": "input",
+                        "_": true
+                    }
+                },
+                "ready": {
+                    "High": -1,
+                    "Low": 0,
+                    "Pin": "output",
+                    "_": true
+                },
+                "valid": {
+                    "High": -1,
+                    "Low": 0,
+                    "Pin": "input",
+                    "_": true
+                }
+            },
+            "wio": {
+                "bits": {
+                    "wdata": {
+                        "High": 511,
+                        "Low": 0,
+                        "Pin": "output",
+                        "_": true
+                    },
+                    "wstrb": {
+                        "High": 63,
+                        "Low": 0,
+                        "Pin": "output",
+                        "_": true
+                    }
+                },
+                "ready": {
+                    "High": -1,
+                    "Low": 0,
+                    "Pin": "input",
+                    "_": true
+                },
+                "valid": {
+                    "High": -1,
+                    "Low": 0,
+                    "Pin": "output",
+                    "_": true
+                }
+            }
+        },
+        "wio": {
+            "wdata": {
+                "High": 255,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "wid": {
+                "High": 7,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "wlast": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "wready": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "output",
+                "_": true
+            },
+            "wstrb": {
+                "High": 31,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "wuser": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            },
+            "wvalid": {
+                "High": -1,
+                "Low": 0,
+                "Pin": "input",
+                "_": true
+            }
+        }
+    },
+    "reset": {
+        "High": -1,
+        "Low": 0,
+        "Pin": "input",
+        "_": true
+    }
+}
