@@ -1,3 +1,8 @@
 .vscode
 *.txt
+*.simple
+__pycache__
+# picker folder
 axi2ui
+# wave
+*.fst
