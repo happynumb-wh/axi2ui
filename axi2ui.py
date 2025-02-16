@@ -40,10 +40,13 @@ def axi2ui_test(dut:DUTosmc_axi_top, tfile:str):
     dut.StepRis(uiVirtualSlave.wrioHandShake)
     
     i = 0
+    test_time = 0
     with open(tfile, "r") as f:
         for line in f:
             if "R" in line:
                 id, time, type, addr = line.split(" ")
+                test_time += 1
+                
                 # Wait axi master ok
                 while axiVirtualMaster.rstatus != axiVirtualMaster.Status.IDLE:
                     dut.Step(1)
@@ -52,6 +55,7 @@ def axi2ui_test(dut:DUTosmc_axi_top, tfile:str):
                 dut.Step(1)
             elif "W" in line:
                 id, time, type, addr = line.split(" ")
+                test_time += 1
                 while axiVirtualMaster.wstatus != axiVirtualMaster.Status.IDLE:
                     dut.Step(1)
                 axiVirtualMaster.axi_awio(int(addr, 16), 0x2, 0x5, axiVirtualMaster.burst_length - 1)
@@ -60,7 +64,11 @@ def axi2ui_test(dut:DUTosmc_axi_top, tfile:str):
                 print("Error: Unknow command")
                 dut.Finish()
                 exit(1)
-            
+            # if test_time > 10000:
+            #     break
+        
+    f.close()
+    dut.Finish()
     
     # dut.Step(100)
     print("axi2ui_test")
