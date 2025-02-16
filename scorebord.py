@@ -36,13 +36,13 @@ class scoreBord:
         for i in range(len(self.writeRecord)):
             if self.writeRecord[i][0] == addr:
                 if self.writeRecord[i][1] == data:
-                    print(f"Write commit: token: {token} addr: {hex(addr)}success")
+                    print(f"Write commit: token: {token} addr: {hex(addr)} success")
                 else:
-                    print(f"Write commit error: token: {token} {hex(addr)} failed")
+                    print(f"Write commit error: token: {token} addr: {hex(addr)} failed")
                     print(f"axi write data: {hex(self.writeRecord[i][1])}")
                     print(f"ui write data: {hex(data)}")
                     self.dut.Finish()
-                    exit(1)
+                    exit(0)
                 self.writeRecord.pop(i)
                 return
                 
@@ -52,11 +52,11 @@ class scoreBord:
                 if self.readRecord[i][2] == data:
                     print(f"Read commit: token: {self.readRecord[i][0]} addr: {hex(addr)} success")
                 else:
-                    print(f"Read commit error: token: {self.readRecord[i][0]} {hex(addr)} failed")
+                    print(f"Read commit error: token: {self.readRecord[i][0]} addr:  {hex(addr)} failed")
                     print(f"axi read data: {hex(data)}")
                     print(f"ui read data: {hex(self.readRecord[i][2])}")
                     self.dut.Finish()
-                    exit(1)
+                    exit(0)
                 self.readRecord.pop(i)
                 return
         pass

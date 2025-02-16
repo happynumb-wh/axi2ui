@@ -7,3 +7,4 @@ axi2ui
 # wave
 *.fst
 *.dat
+*.hier

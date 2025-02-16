@@ -26,9 +26,21 @@ class ui_virtual_slave:
         self.writeRecord = {}
         self.dut = dut
         self.scorebord = scorebord
+        # Delay cycle to 
+        self.writeDelay = 0
+        self.readDelay = 0
+        self.waitWriteDelay = 0
+        self.waitReadDelay = 0
+        self.cycle = 0
+        
+    def setWriteDelay(self, cycle):
+        self.writeDelay = cycle
+    
+    def setReadDelay(self, cycle):
+        self.readDelay = cycle
+    
     # axi2ui hand shake with ui
     def awrioHandShake(self, cycle):
-        
         if self.dut.io_ui_ario_valid.value:
             if self.dut.io_ui_ario_ready.value:
                 self.dut.io_ui_ario_ready.value = 0
@@ -79,11 +91,18 @@ class ui_virtual_slave:
                     self.dut.io_ui_wio_ready.value = 0
                     self.scorebord.writeMemory(self.writeToken[0], self.writeToken[2])
                 else:
+                    if self.writeDelay != 0:
+                        self.waitWriteDelay += 1
+                        if self.waitWriteDelay == self.writeDelay:
+                            self.waitWriteDelay = 0
+                        else:
+                            return
+
                     self.dut.io_ui_wio_ready.value = 1
                     # store the data in token
                     self.writeToken.append(self.strbdata(self.dut.io_ui_wio_bits_wdata.value, self.dut.io_ui_wio_bits_wstrb.value))
                     self.scorebord.commitWrite(self.writeToken[1], self.writeToken[0], self.writeToken[2])
-                    print("Write addr:", hex(self.writeToken[0]))
+                    # print("Write addr:", hex(self.writeToken[0]))
                     
         if self.inPrepareReadData:
             if self.dut.io_ui_rio_ready.value:
@@ -91,10 +110,17 @@ class ui_virtual_slave:
                     self.inPrepareReadData = 0
                     self.dut.io_ui_rio_valid.value = 0
                 else: 
+                # Delay to back
+                    if self.readDelay != 0:
+                        self.waitReadDelay += 1
+                        if self.waitReadDelay == self.readDelay:
+                            self.waitReadDelay = 0
+                        else:
+                            return
                     self.dut.io_ui_rio_valid.value = 1
                     rdata = self.scorebord.readMemory(self.readToken[0])
                     self.dut.io_ui_rio_bits_rdata.value = rdata
                     self.dut.io_ui_rio_bits_rtoken.value = self.readToken[1]
                     self.scorebord.readAddRecord(self.readToken[1], self.readToken[0], rdata)
                     
-                    print("Read addr:", hex(self.readToken[0]), hex(rdata))
+                    # print("Read addr:", hex(self.readToken[0]), hex(rdata))

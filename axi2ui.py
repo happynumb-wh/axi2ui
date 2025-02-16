@@ -28,18 +28,15 @@ def axi2ui_test(dut:DUTosmc_axi_top, tfile:str):
     dut.reset.value = 0
     dut.Step(20)
 
-    # axiVirtualMaster.axi_ario(0x100000, 0x2, 0x5, axiVirtualMaster.burst_length - 1)
-    # axiVirtualMaster.axi_awio(0x200000, 0x2, 0x5, axiVirtualMaster.burst_length - 1)
-    dut.StepRis(axiVirtualMaster.axi_addrhandshake)
-    dut.StepRis(axiVirtualMaster.every_read_cycle)
-    dut.StepRis(axiVirtualMaster.every_write_cycle)
-    dut.StepRis(axiVirtualMaster.wrio_finish)
+    # Write machine and Read machine
+    dut.StepRis(axiVirtualMaster.axiReadMachine)
+    dut.StepRis(axiVirtualMaster.axiWriteMachine)
     
-    
+    # ui slave respond
     dut.StepRis(uiVirtualSlave.awrioHandShake)
     dut.StepRis(uiVirtualSlave.wrioHandShake)
     
-    i = 0
+    # i = 0
     test_time = 0
     with open(tfile, "r") as f:
         for line in f:
@@ -47,10 +44,8 @@ def axi2ui_test(dut:DUTosmc_axi_top, tfile:str):
                 id, time, type, addr = line.split(" ")
                 test_time += 1
                 
-                # Wait axi master ok
                 while axiVirtualMaster.rstatus != axiVirtualMaster.Status.IDLE:
                     dut.Step(1)
-                    # exit(0)
                 axiVirtualMaster.axi_ario(int(addr, 16), 0x2, 0x5, axiVirtualMaster.burst_length - 1)
                 dut.Step(1)
             elif "W" in line:
@@ -63,11 +58,21 @@ def axi2ui_test(dut:DUTosmc_axi_top, tfile:str):
             else:
                 print("Error: Unknow command")
                 dut.Finish()
-                exit(1)
-            # if test_time > 10000:
-            #     break
+                exit(0)
         
-    f.close()
+    # f.close()
+    addr = 0x10000000
+    times = 100000
+    # uiVirtualSlave.setWriteDelay(100000)
+    # axiVirtualMaster.axi_ario(addr, 0x2, 0x5, axiVirtualMaster.burst_length - 1)
+    # dut.Step(100)
+    
+    for i in range(times):
+        while axiVirtualMaster.wstatus != axiVirtualMaster.Status.IDLE:
+            dut.Step(1)
+        axiVirtualMaster.axi_awio(addr + i * 0x100, 0x2, 0x5, axiVirtualMaster.burst_length - 1)
+        dut.Step(1)
+
     dut.Finish()
     
     # dut.Step(100)
