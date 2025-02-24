@@ -8,3 +8,5 @@ axi2ui
 *.fst
 *.dat
 *.hier
+xsim.dir
+xvlog.pb

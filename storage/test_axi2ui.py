@@ -1,9 +1,11 @@
 #!/bin/python3
 from axi2ui import *
-from axi_virtual_master import *
+from storage.axi_virtual_master import *
 from ui_virtual_slave import *
 from scorebord import *
+import tqdm
 import sys
+import os
 
 
 class OsmcAxiTopDriver:
@@ -36,10 +38,15 @@ def axi2ui_test(dut:DUTosmc_axi_top, tfile:str):
     dut.StepRis(uiVirtualSlave.awrioHandShake)
     dut.StepRis(uiVirtualSlave.wrioHandShake)
     
-    # i = 0
+    i = 0
     test_time = 0
+    
     with open(tfile, "r") as f:
-        for line in f:
+        lines = f.readlines()
+        full_times = len(lines)
+        f.seek(0, os.SEEK_SET)
+        for tqdm_lines in tqdm.tqdm(range(full_times//1000)):
+            line = lines[tqdm_lines]
             if "R" in line:
                 id, time, type, addr = line.split(" ")
                 test_time += 1
@@ -61,19 +68,19 @@ def axi2ui_test(dut:DUTosmc_axi_top, tfile:str):
                 exit(0)
         
     # f.close()
-    addr = 0x10000000
-    times = 100000
+    # addr = 0x10000000
+    # times = 100000
     # uiVirtualSlave.setWriteDelay(100000)
     # axiVirtualMaster.axi_ario(addr, 0x2, 0x5, axiVirtualMaster.burst_length - 1)
     # dut.Step(100)
     
-    for i in range(times):
-        while axiVirtualMaster.wstatus != axiVirtualMaster.Status.IDLE:
-            dut.Step(1)
-        axiVirtualMaster.axi_awio(addr + i * 0x100, 0x2, 0x5, axiVirtualMaster.burst_length - 1)
-        dut.Step(1)
+    # for i in range(times):
+    #     while axiVirtualMaster.wstatus != axiVirtualMaster.Status.IDLE:
+    #         dut.Step(1)
+    #     axiVirtualMaster.axi_awio(addr + i * 0x100, 0x2, 0x5, axiVirtualMaster.burst_length - 1)
+    #     dut.Step(1)
 
-    dut.Finish()
+    # dut.Finish()
     
     # dut.Step(100)
     print("axi2ui_test")
