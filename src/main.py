@@ -36,32 +36,27 @@ async def test_top(dut: DUTosmc_axi_top, tfile:str):
     
     # print('Write')
     
-    # for i in range(36):
-    #     await axiEnv.axiWriteAgent.Write(0x100000 + 0x100 * i, burst_length - 1, 0x5, 0x2)
     with open(tfile, "r") as f:
         lines = f.readlines()
         full_times = len(lines)
         f.seek(0, os.SEEK_SET)
-        for tqdm_lines in tqdm.tqdm(range(full_times)):
+        for tqdm_lines in tqdm.tqdm(range(full_times//100)):
             line = lines[tqdm_lines]
             if "R" in line:
-                id, time, type, addr = line.split(" ")
+                addr = line.split(" ")[-1]
                 await axiEnv.axiReadAgent.Read(int(addr, 16), burst_length - 1, 0x5, 0x2)
                 
             elif "W" in line:
-                id, time, type, addr = line.split(" ")
+                addr = line.split(" ")[-1]
                 await axiEnv.axiWriteAgent.Write(int(addr, 16), burst_length - 1, 0x5, 0x2)
             else:
                 print("Error: Unknow command")
                 dut.Finish()
                 exit(0)
 
-    # axiEnv.uiReadAgent.setRioDelay(200)
-    # for i in range(128):
-    #     await axiEnv.axiReadAgent.Read(0x1000 + 0x100 * i, burst_length - 1, 0x5, 0x2)
-    # Wait all finished
+ 
     await axiEnv.Finish()
-    # await ClockCycles(dut, 200000)
+
 
 
 

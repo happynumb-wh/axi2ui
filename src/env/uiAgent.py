@@ -82,6 +82,10 @@ class uiWriteAgent(Agent):
         self.message = axi2uiReadMessage(bundle)
         self.memory = memory
         self.queue = []
+        self.wioDelay = 0
+
+    def setWioDelay(self, delay):
+        self.wioDelay = delay
 
     @driver_method()
     async def handleAwio(self):
@@ -120,6 +124,8 @@ class uiWriteAgent(Agent):
             else:
                 await self.bundle.step(1)
                 continue
+            if self.wioDelay > 0:
+                await self.bundle.step(self.wioDelay)
             
             self.bundle.assign(port)
             await Value(self.bundle.wio.valid, 1)

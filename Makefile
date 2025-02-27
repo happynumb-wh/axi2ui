@@ -11,8 +11,7 @@ init:
 	$(MAKE) -C $(AXI2UI_DIR)
 
 test:
-	python3 $(PWD)/main.py $(TRACE_FILE)
-	gtkwave axi2ui.fst
+	python3 $(SRC_DIR)/main.py $(TRACE_FILE)
 
 clean:
 	rm -rf $(AXI2UI_DIR)
