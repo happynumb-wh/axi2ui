@@ -1,2 +1,3 @@
 osmc_axi_top:
   - "wire _u_axi_consis_io_consis_io_rconsis"
+  - "wire _u_axi_read_io_ready_stall"

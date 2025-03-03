@@ -56,7 +56,8 @@ async def test_axi2uiRROB(axi2ui_Env: axi2uiEnv):
     toffee.create_task(axi2ui_Env.envDeamon())
     addr = 0x10000000
     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
-    for i in range(128):
+    for i in range(512):
+        # print(axi2ui_Env.dut.osmc_axi_top__u_axi_read_io_ready_stall.value)
         await axi2ui_Env.axiReadAgent.Read(addr, burst_length - 1, BURST32, 0x2)
         addr += 0x100
     
@@ -64,11 +65,28 @@ async def test_axi2uiRROB(axi2ui_Env: axi2uiEnv):
 
 
 
+"""
+Coverage definition
+"""
+
+import toffee.funcov as fc
+from toffee.funcov import CovGroup
+
+
+def adder_cover_point(axi2ui: DUTosmc_axi_top):
+    g = CovGroup("Adder addition function")
+
+    g.add_cover_point(axi2ui.osmc_axi_top__u_axi_read_io_ready_stall, {"io_ready_stall is 1": fc.Eq(1)}, name="io_ready_stall set 1")
+
+    return g
+
+
 @toffee_test.fixture
 async def axi2ui_Env(toffee_request: toffee_test.ToffeeRequest):
     toffee.setup_logging(toffee.WARNING)
     dut = toffee_request.create_dut(DUTosmc_axi_top)
     toffee.start_clock(dut)
+    toffee_request.add_cov_groups(adder_cover_point(dut))
     dut.InitClock("clock")
     # axi bundle
     axiBundle = axiMasterBundle()
