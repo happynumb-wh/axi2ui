@@ -24,23 +24,22 @@ async def test_top(dut: DUTosmc_axi_top, tfile:str):
     
     axiBundle.reset.value = 1
     
-    await axiBundle.step(100)
-    axiBundle.reset.value = 0
-    await axiBundle.step(10)
     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
     
     ###############################################################
     axiEnv = axi2uiEnv(axiBundle, uiBundle, dut)
+    await axiEnv.reset()
     toffee.create_task(axiEnv.envDeamon())
     
     
-    # print('Write')
-    
+    print('Write')
+    axiEnv.uiReadAgent.setRioRandom(1)
+    # axiEnv.uiReadAgent.setRioDelay(20)
     with open(tfile, "r") as f:
         lines = f.readlines()
         full_times = len(lines)
         f.seek(0, os.SEEK_SET)
-        for tqdm_lines in tqdm.tqdm(range(full_times//100)):
+        for tqdm_lines in tqdm.tqdm(range(full_times)):
             line = lines[tqdm_lines]
             if "R" in line:
                 addr = line.split(" ")[-1]
@@ -53,6 +52,8 @@ async def test_top(dut: DUTosmc_axi_top, tfile:str):
                 print("Error: Unknow command")
                 dut.Finish()
                 exit(0)
+    # for i in range(512):
+    #     await axiEnv.axiWriteAgent.Write(0x10000000 + i * 0x200, 1, 0x5, 0x2)
 
  
     await axiEnv.Finish()

@@ -83,6 +83,16 @@ ODTMAX                  = 48
 BANK_NUM                = 4  
 BURST_LENGTH            = UI_DATAW // AXI_DATAW
 
+
+BURST1                  = 0x0
+BURST2                  = 0x1
+BURST4                  = 0x2
+BURST8                  = 0x3
+BURST16                 = 0x4
+BURST32                 = 0x5
+BURST64                 = 0x6
+BURST128                = 0x7
+
 axiMasterPortDict = {
   # Write address channel
   "io_awio_awid": 0, 

@@ -15,11 +15,15 @@ class uiReadAgent(Agent):
         self.message = axi2uiReadMessage(bundle)
         self.memory = memory
         self.queue = []
-        self.rioDelay =  0
+        self.rioDelay = 0
+        self.rioRandom = 0
 
     def setRioDelay(self, delay):
         self.rioDelay = delay
 
+    def setRioRandom(self, random):
+        self.rioRandom = random
+    
     @driver_method()
     async def handleArio(self):
         '''
@@ -46,18 +50,22 @@ class uiReadAgent(Agent):
                 await self.bundle.step(1)
                 continue
             
-            for item in self.queue:
-                if item[1] == 1 and item[2] == 0:
-                    break
-            else:
+            item = self.queue[0]
+
+            if not(item[1] == 1 and item[2] == 0):
                 await self.bundle.step(1)
                 continue
+                
+            if self.rioRandom:
+                filtered = [x for x in self.queue if x[1] == 1 and x[2] == 0]
+                item = random.choice(filtered)
 
+                
             port = {
                 'rio': {
                     'valid': 1
                 }
-            }            
+            }
             port['rio']['bits_rdata'] = self.memory.readMemory(item[0])
             port['rio']['bits_rtoken'] = item[4]
             

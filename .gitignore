@@ -10,3 +10,4 @@ axi2ui
 *.hier
 xsim.dir
 xvlog.pb
+reports

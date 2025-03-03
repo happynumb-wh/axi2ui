@@ -19,7 +19,7 @@ class axiWriteAgent(Agent):
     @driver_method()
     async def handleAwio(self, port: dict):
         '''
-        Queue: [addr, awio, wio, bio, wdata, token]
+        Queue: [addr, awio, wio, bio, wdata, token, wrlen, wrsize]
         '''
         port['awio']['awvalid'] = 1
         # {
@@ -34,7 +34,7 @@ class axiWriteAgent(Agent):
         # }
         self.bundle.assign(port)
         await Value(self.bundle.awio.awready, 1)
-        self.queue.append([port['awio']['awaddr'], 0, 0, 0, 0, 0])
+        self.queue.append([port['awio']['awaddr'], 0, 0, 0, 0, 0, port['awio']['awlen'] + 1, 2**port['awio']['awsize'] * 8])
         self.awioRequest += 1
         port['awio']['awvalid'] = 0
         self.bundle.assign(port)
@@ -74,8 +74,9 @@ class axiWriteAgent(Agent):
             # await self.bundle.step(1)
             await Value(self.bundle.wio.wready, 1)
             data = []
+            length = item[6]
             while True:
-                if len(data) == mcparam.BURST_LENGTH:
+                if len(data) == length:
                     break
                                
                 if self.bundle.wio.wready.value:
@@ -83,22 +84,23 @@ class axiWriteAgent(Agent):
                         data.append(mcparam.strbdata(self.bundle.wio.wdata.value, self.bundle.wio.wstrb.value, mcparam.AXI_STRBW))
                         port['wio']['wlast'] = 0 
                         port['wio']['wvalid'] = 0
-                        assert len(data) == 2, "Wlast finish recv data"
+                        assert len(data) == length, "Wlast finish recv data"
                         item[4] = mcparam.combine_data(data, mcparam.AXI_DATAW)
                         item[2] = 1                    
                     else:
                         # fixme set data
                         port['wio']['wdata'] = random.randint(0, 2**mcparam.AXI_DATAW - 1)
                         data.append(self.bundle.wio.wdata.value)
-                        if len(data) == mcparam.BURST_LENGTH - 1: # 
+                        if len(data) == length - 1: # 
                             port['wio']['wlast'] = 1
                 else:
                     await Value(self.bundle.wio.wready, 1)
+                    continue
 
                 self.bundle.assign(port)
                 await self.bundle.step(1)
 
-
+           
     @driver_method()
     async def handleBio(self):
         while True:
@@ -157,7 +159,7 @@ class axiReadAgent(Agent):
     @driver_method()
     async def handleArio(self, port: dict):
         '''
-        Queue: [addr, ario, rio, rdata[2], token]
+        Queue: [addr, ario, rio, rdata[2], token, arlen, arsize]
         '''
         port['ario']['arvalid'] = 1
         # {
@@ -172,7 +174,7 @@ class axiReadAgent(Agent):
         # }
         self.bundle.assign(port)
         await Value(self.bundle.ario.arready, 1)
-        self.queue.append([port['ario']['araddr'], 0, 0, 0, 0])
+        self.queue.append([port['ario']['araddr'], 0, 0, 0, 0, port['ario']['arlen'] + 1, 2**port['ario']['arsize'] * 8])
         self.arioRequest += 1
         port['ario']['arvalid'] = 0
         self.bundle.assign(port)
@@ -202,14 +204,19 @@ class axiReadAgent(Agent):
             # await self.bundle.step(1)
             await Value(self.bundle.rio.rvalid, 1)
             data = []
+            # burst times
+            length = item[5]
             while True:
-                if len(data) == mcparam.BURST_LENGTH: # 
+                if len(data) == length:
                     break
                 if self.bundle.rio.rvalid.value:
                     data.append(self.bundle.rio.rdata.value)
                     if self.bundle.rio.rlast.value:
                         item[2] = 1
-                        item[3] = mcparam.combine_data(data, mcparam.AXI_DATAW)
+                        # if len(data) != length:
+                            
+                        # assert len(data) == length, "Rlast finish recv data"
+                        item[3] = mcparam.combine_data(data, item[6])
                         # clear rready
                         port['rio']['rready'] = 0  
                 else:
