@@ -4,7 +4,7 @@ AXI2UI_DIR 		= $(SRC_DIR)/axi2ui
 RTL_DIR 		= $(PWD)/rtl
 WAIVER_DIR 		= $(PWD)/src
 TRACE_DIR 		= $(PWD)/test/data
-TRACE_FILE 		= $(TRACE_DIR)/trace2/bzip2_liberty_0_rand500w.txt
+TRACE_FILE 		= $(TRACE_DIR)/trace2/cactusADM_0_rand100w.txt
 INTERNAL_FILE 	= $(PWD)/internal.yaml
 
 init:
