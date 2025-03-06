@@ -6,6 +6,7 @@ WAIVER_DIR 		= $(PWD)/src
 TRACE_DIR 		= $(PWD)/test/data
 TRACE_FILE 		= $(TRACE_DIR)/trace2/cactusADM_0_rand100w.txt
 INTERNAL_FILE 	= $(PWD)/internal.yaml
+PYTEST_THREADS = 4
 
 init:
 	picker export --autobuild=false $(RTL_DIR)/osmc_axi_top.sv -w $(PWD)/axi2ui.fst --sname osmc_axi_top --tdir $(AXI2UI_DIR) --lang python -e -c --sim verilator --internal $(INTERNAL_FILE)
@@ -15,7 +16,7 @@ test:
 	python3 $(SRC_DIR)/main.py $(TRACE_FILE)
 
 run:
-	pytest --toffee-report -sv $(SRC_DIR)
+	pytest --toffee-report -sv $(SRC_DIR) -n$(PYTEST_THREADS)
 
 clean:
 	rm -rf $(AXI2UI_DIR)

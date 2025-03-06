@@ -83,6 +83,9 @@ class axi2uiEnv(Env):
             if self.axiReadAgent.finishRequest == self.axiReadAgent.arioRequest and self.axiWriteAgent.finishRequest == self.axiWriteAgent.awioRequest:
                 break
             await ClockCycles(self.dut, 1)
+        
+        for task in self.handler:
+            task.cancel()
     
     def __del__(self):
         self.dut.Finish()
