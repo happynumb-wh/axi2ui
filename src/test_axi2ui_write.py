@@ -58,7 +58,9 @@ def adder_cover_point(axi2ui: DUTosmc_axi_top):
     g = CovGroup("axi2ui write function")
 
     # g.add_cover_point(axi2ui.osmc_axi_top__u_axi_read_io_ready_stall, {"io_ready_stall is 1": fc.Eq(1)}, name="io_ready_stall set 1")
-
+    # g.add_cover_point(axi2ui.osmc_axi_top__u_axi_read_io_ready_stall, {"io_ready_stall is 1": fc.Eq(1)}, name="io_ready_stall set 1")
+    # g.add_cover_point(axi2ui.osmc_axi_top_u_axi_read_u_axi_r_cmdbuffer_cmd_fifo_vaild_data, {"cmd fifo full": fc.Eq(0x100)}, name="cmd fifo full")
+    # g.add_cover_point(axi2ui.osmc_axi_top_u_axi_read_u_axi_r_cmdbuffer_token_fifo_vaild_data, {"token fifo full": fc.Eq(0x100)}, name="token fifo full")
     return g
 
 

@@ -9,7 +9,7 @@ class uiReadAgent(Agent):
     '''
     Agent for the read channel
     '''
-    def __init__(self, bundle: uiReadBundle, memory: scoreBord):
+    def __init__(self, bundle: uiReadBundle, memory: scoreBord, readConsis):
         super().__init__(bundle)
         self.bundle = bundle
         self.message = axi2uiReadMessage(bundle)
@@ -17,6 +17,7 @@ class uiReadAgent(Agent):
         self.queue = []
         self.rioDelay = 0
         self.rioRandom = 0
+        self.readConsis = readConsis
 
     def setRioDelay(self, delay):
         self.rioDelay = delay
@@ -50,12 +51,15 @@ class uiReadAgent(Agent):
                 await self.bundle.step(1)
                 continue
             
-            item = self.queue[0]
-
-            if not(item[1] == 1 and item[2] == 0):
+            for item in self.queue:
+                if item[1] == 1 and item[2] == 0:
+                    break
+            else:
                 await self.bundle.step(1)
                 continue
-                
+            
+            while self.readConsis(item[-1]):
+                await self.bundle.step(1)
             if self.rioRandom:
                 filtered = [x for x in self.queue if x[1] == 1 and x[2] == 0]
                 item = random.choice(filtered)
@@ -68,7 +72,6 @@ class uiReadAgent(Agent):
             }
             port['rio']['bits_rdata'] = self.memory.readMemory(item[0])
             port['rio']['bits_rtoken'] = item[4]
-            
             if self.rioDelay > 0:
                 await self.bundle.step(self.rioDelay)
             self.bundle.assign(port)
@@ -84,13 +87,14 @@ class uiWriteAgent(Agent):
     '''
     Agent for the write channel
     '''
-    def __init__(self, bundle: uiWriteBundle, memory: scoreBord):
+    def __init__(self, bundle: uiWriteBundle, memory: scoreBord, writeConsis):
         super().__init__(bundle)
         self.bundle = bundle
         self.message = axi2uiReadMessage(bundle)
         self.memory = memory
         self.queue = []
         self.wioDelay = 0
+        self.writeConsis = writeConsis
 
     def setWioDelay(self, delay):
         self.wioDelay = delay
@@ -134,6 +138,9 @@ class uiWriteAgent(Agent):
                 continue
             if self.wioDelay > 0:
                 await self.bundle.step(self.wioDelay)
+            
+            while self.writeConsis(item[-1]):
+                await self.bundle.step(1)
             
             self.bundle.assign(port)
             await Value(self.bundle.wio.valid, 1)

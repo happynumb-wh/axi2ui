@@ -7,3 +7,15 @@ osmc_axi_top.u_axi_read.u_axi_r_cmdbuffer.cmd_fifo:
 
 osmc_axi_top.u_axi_read.u_axi_r_cmdbuffer.token_fifo:
   - "reg [8:0] vaild_data"
+
+osmc_axi_top.u_axi_read.r_axi_consis_table:
+  - "reg [4:0] axi_ptr"
+  - "reg [4:0] ui_ptr"
+
+osmc_axi_top.u_axi_write.w_axi_consis_table:
+  - "reg [4:0] axi_ptr"
+  - "reg [4:0] ui_ptr"
+
+osmc_axi_top.u_axi_consis:
+  - "wire io_consis_io_wconsis"
+  - "wire io_consis_io_rconsis"

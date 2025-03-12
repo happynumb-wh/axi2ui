@@ -6,8 +6,13 @@ __pycache__
 axi2ui
 # wave
 *.fst
+*.fsdb
 *.dat
 *.hier
 xsim.dir
 xvlog.pb
 reports
+verdiLog
+ucli.key
+novas_dump.*
+novas.*

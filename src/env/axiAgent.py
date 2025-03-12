@@ -15,6 +15,10 @@ class axiWriteAgent(Agent):
         self.bundle = bundle
         self.message = axi2uiWriteMessage(bundle)
         self.queue = []
+        self.wioDelay = 0
+
+    def setWioDelay(self, delay):
+        self.wioDelay = delay
 
     @driver_method()
     async def handleAwio(self, port: dict):
@@ -34,26 +38,28 @@ class axiWriteAgent(Agent):
         # }
         self.bundle.assign(port)
         await Value(self.bundle.awio.awready, 1)
-        self.queue.append([port['awio']['awaddr'], 0, 0, 0, 0, 0, port['awio']['awlen'] + 1, 2**port['awio']['awsize'] * 8])
+        for item in self.queue:
+            if item[1] == 0:
+                item[0] = port['awio']['awaddr']
+                assert item[6] == port['awio']['awlen'] + 1, "Write length not match"
+                assert item[7] == 2**port['awio']['awsize'] * 8, "Write size not match"
+                break
+        else:
+            item = [port['awio']['awaddr'], 0, 0, 0, 0, 0, port['awio']['awlen'] + 1, 2**port['awio']['awsize'] * 8]
+            self.queue.append(item)
         self.awioRequest += 1
         port['awio']['awvalid'] = 0
         self.bundle.assign(port)
         # Write addr handle ok
-        self.queue[-1][1] = 1
+        item[1] = 1
+        # await self.bundle.step(1)
+        return item
     
     @driver_method()
     async def handleWio(self):
-
-        while True:       
-            if len(self.queue) == 0:
-                await self.bundle.step(1)
-                continue
-            for item in self.queue:
-                if item[1] == 1 and item[2] == 0:
-                    break
-            else:
-                await self.bundle.step(1)
-                continue    
+        while True:
+            wioNew = 0
+           
             port = {
                 'wio': {
                     'wid': 0,
@@ -68,11 +74,29 @@ class axiWriteAgent(Agent):
             port['wio']['wvalid'] = 1
             port['wio']['wstrb'] = 0xffffffff
             port['wio']['wdata'] = random.randint(0, 2**mcparam.AXI_DATAW - 1)
-            # fixme: set write data
+
+            if self.wioDelay:
+                await self.bundle.step(self.wioDelay)
             # set data
             self.bundle.assign(port)
             # await self.bundle.step(1)
             await Value(self.bundle.wio.wready, 1)
+            # We get function first
+            for item in self.queue:
+                if item[1] == 1 and item[2] == 0:
+                    break
+               
+            else:
+                count = sum([1 for i in self.queue if i[1] == 0])
+                # if count >= 3:
+                #     await self.bundle.step(1)
+                #     continue
+                item = [0, 0, 0, 0, 0, 0, BURST_LENGTH, 2**BURST32 * 8]
+                wioNew = 1  
+            
+            if wioNew:
+                self.queue.append(item)
+            
             data = []
             length = item[6]
             while True:
@@ -86,7 +110,7 @@ class axiWriteAgent(Agent):
                         port['wio']['wvalid'] = 0
                         assert len(data) == length, "Wlast finish recv data"
                         item[4] = mcparam.combine_data(data, mcparam.AXI_DATAW)
-                        item[2] = 1                    
+                        item[2] = 1
                     else:
                         # fixme set data
                         port['wio']['wdata'] = random.randint(0, 2**mcparam.AXI_DATAW - 1)
@@ -141,7 +165,7 @@ class axiWriteAgent(Agent):
                 'awvalid': 0                     
             }
         }
-        await self.handleAwio(port)
+        return await self.handleAwio(port)
         
     
 class axiReadAgent(Agent):
@@ -155,11 +179,15 @@ class axiReadAgent(Agent):
         self.bundle = bundle
         self.message = axi2uiReadMessage(bundle)
         self.queue = []      
+        self.rioDelay = 0
+        
+    def setRioDelay(self, delay):
+        self.rioDelay = delay
     
     @driver_method()
     async def handleArio(self, port: dict):
         '''
-        Queue: [addr, ario, rio, rdata[2], token, arlen, arsize]
+        Queue: [addr, ario, rio, rdata, token, arlen, arsize]
         '''
         port['ario']['arvalid'] = 1
         # {
@@ -180,6 +208,7 @@ class axiReadAgent(Agent):
         self.bundle.assign(port)
         # Read addr handle ok
         self.queue[-1][1] = 1
+        return self.queue[-1]
     
     
     @driver_method()
@@ -200,6 +229,10 @@ class axiReadAgent(Agent):
                     'rready': 1
                 }
             }
+            # Set delay here
+            if self.rioDelay:
+                await self.bundle.step(self.rioDelay)
+            
             self.bundle.assign(port)
             # await self.bundle.step(1)
             await Value(self.bundle.rio.rvalid, 1)
@@ -212,9 +245,7 @@ class axiReadAgent(Agent):
                 if self.bundle.rio.rvalid.value:
                     data.append(self.bundle.rio.rdata.value)
                     if self.bundle.rio.rlast.value:
-                        item[2] = 1
-                        # if len(data) != length:
-                            
+                        item[2] = 1                       
                         # assert len(data) == length, "Rlast finish recv data"
                         item[3] = mcparam.combine_data(data, item[6])
                         # clear rready
@@ -243,4 +274,4 @@ class axiReadAgent(Agent):
         }
         
         # wait finish
-        await self.handleArio(port)
+        return await self.handleArio(port)
