@@ -33,12 +33,16 @@ async def test_top(dut: DUTosmc_axi_top, tfile:str):
     
     
     axiEnv.uiReadAgent.setRioRandom(1)
+    axiEnv.uiReadAgent.setRioDelay(100)
+    # axiEnv.uiWriteAgent.setWioDelay(100)
+    # axiEnv.axiReadAgent.setRioDelay(20)
+    # axiEnv.axiWriteAgent.setWioDelay(20)
     
     with open(tfile, "r") as f:
         lines = f.readlines()
         full_times = len(lines)
         f.seek(0, os.SEEK_SET)
-        for tqdm_lines in tqdm.tqdm(range(full_times // 10)):
+        for tqdm_lines in tqdm.tqdm(range(full_times // 100)):
             line = lines[tqdm_lines]
             if "R" in line:
                 addr = line.split(" ")[-1]
