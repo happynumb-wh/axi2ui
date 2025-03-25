@@ -73,7 +73,7 @@ class uiReadAgent(Agent):
             port['rio']['bits_rdata'] = self.memory.readMemory(item[0])
             port['rio']['bits_rtoken'] = item[4]
             if self.rioDelay > 0:
-                await self.bundle.step(self.rioDelay)
+                await self.bundle.step(random.randint(1, self.rioDelay))
             self.bundle.assign(port)
             await Value(self.bundle.rio.ready, 1)
             port['rio']['valid'] = 0
@@ -149,7 +149,7 @@ class uiWriteAgent(Agent):
                 await self.bundle.step(1)
                 continue
             if self.wioDelay > 0:
-                await self.bundle.step(self.wioDelay)
+                await self.bundle.step(random.randint(1, self.wioDelay))
             
             while self.writeConsis(item[-1]):
                 await self.bundle.step(1)

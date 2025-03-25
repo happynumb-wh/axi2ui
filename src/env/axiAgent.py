@@ -90,7 +90,7 @@ class axiWriteAgent(Agent):
             port['wio']['wdata'] = random.randint(0, 2**mcparam.AXI_DATAW - 1)
 
             if self.wioDelay:
-                await self.bundle.step(self.wioDelay)
+                await self.bundle.step(random.randint(1, self.wioDelay))
             if self.waitForWready:
                 await Value(self.bundle.wio.wready, 1, 0)   # this may cause deadlock, we just test it anyhow
             # set data
@@ -103,10 +103,6 @@ class axiWriteAgent(Agent):
                     break
                
             else:
-                count = sum([1 for i in self.queue if i[1] == 0])
-                # if count >= 3:
-                #     await self.bundle.step(1)
-                #     continue
                 item = [0, 0, 0, 0, 0, 0, BURST_LENGTH, 2**BURST32 * 8]
                 wioNew = 1  
             
@@ -249,7 +245,7 @@ class axiReadAgent(Agent):
             }
             # Set delay here
             if self.rioDelay:
-                await self.bundle.step(self.rioDelay)
+                await self.bundle.step(random.randint(1, self.rioDelay))
             
             self.bundle.assign(port)
             # await self.bundle.step(1)
