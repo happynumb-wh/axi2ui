@@ -16,18 +16,24 @@ class axiWriteAgent(Agent):
         self.message = axi2uiWriteMessage(bundle)
         self.queue = []
         self.wioDelay = 0
+        self.wioRandomDelay = False
         self.awioDelay = 0
+        self.awioRandomDelay = False
         self.bioDelay = 0
+        self.bioRandomDelay = False
         self.waitForWready = 0
 
-    def setWioDelay(self, delay):
+    def setWioDelay(self, delay, random=False):
         self.wioDelay = delay
+        self.wioRandomDelay = random
         
-    def setAwioDelay(self, delay):
+    def setAwioDelay(self, delay, random=False):
         self.awioDelay = delay
+        self.awioRandomDelay = random
         
-    def setBioDelay(self, delay):
+    def setBioDelay(self, delay, random=False):
         self.bioDelay = delay
+        self.bioRandomDelay = random
     
     def setWaitForWready(self, value):
         self.waitForWready = value
@@ -49,6 +55,9 @@ class axiWriteAgent(Agent):
         #     "awvalid": 1
         # }
         if self.awioDelay:
+            if self.awioRandomDelay:
+                await self.bundle.step(random.randint(1, self.awioDelay))
+            else:
                 await self.bundle.step(self.awioDelay)
         self.bundle.assign(port)
         await Value(self.bundle.awio.awready, 1)
@@ -90,7 +99,10 @@ class axiWriteAgent(Agent):
             port['wio']['wdata'] = random.randint(0, 2**mcparam.AXI_DATAW - 1)
 
             if self.wioDelay:
-                await self.bundle.step(random.randint(1, self.wioDelay))
+                if self.wioRandomDelay:
+                    await self.bundle.step(random.randint(1, self.wioDelay))
+                else:
+                    await self.bundle.step(self.wioDelay)
             if self.waitForWready:
                 await Value(self.bundle.wio.wready, 1, 0)   # this may cause deadlock, we just test it anyhow
             # set data
@@ -157,7 +169,10 @@ class axiWriteAgent(Agent):
                 }
             }
             if self.bioDelay:
-                await self.bundle.step(self.bioDelay)
+                if self.bioRandomDelay:
+                    await self.bundle.step(random.randint(1, self.bioDelay))
+                else:
+                    await self.bundle.step(self.bioDelay)
             self.bundle.assign(port)
             await Value(self.bundle.bio.bvalid, 1)
             item[3] = 1

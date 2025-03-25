@@ -94,15 +94,19 @@ class uiWriteAgent(Agent):
         self.memory = memory
         self.queue = []
         self.wioDelay = 0
+        self.wioRandomDelay = False
         self.awioDelay = 0
+        self.awioRandomDelay = False
         self.waitForAwvalid = 0
         self.writeConsis = writeConsis
 
-    def setWioDelay(self, delay):
+    def setWioDelay(self, delay, random=False):
         self.wioDelay = delay
+        self.wioRandomDelay = random
         
-    def setAwioDelay(self, delay):
+    def setAwioDelay(self, delay, random=False):
         self.awioDelay = delay
+        self.awioRandomDelay = random
         
     def setWaitForAwvalid(self, value):
         self.waitForAwvalid = value
@@ -119,7 +123,10 @@ class uiWriteAgent(Agent):
                 }
             }
             if self.awioDelay > 0:
-                await self.bundle.step(self.awioDelay)
+                if self.awioRandomDelay:
+                    await self.bundle.step(random.randint(1, self.awioDelay))
+                else:
+                    await self.bundle.step(self.awioDelay)
             if self.waitForAwvalid:
                 await Value(self.bundle.awio.valid, 1, 0)
             self.bundle.assign(port)
@@ -149,7 +156,10 @@ class uiWriteAgent(Agent):
                 await self.bundle.step(1)
                 continue
             if self.wioDelay > 0:
-                await self.bundle.step(random.randint(1, self.wioDelay))
+                if self.wioRandomDelay:
+                    await self.bundle.step(random.randint(1, self.wioDelay))
+                else:
+                    await self.bundle.step(self.wioDelay)
             
             while self.writeConsis(item[-1]):
                 await self.bundle.step(1)
