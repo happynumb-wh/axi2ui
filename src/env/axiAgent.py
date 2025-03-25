@@ -16,9 +16,21 @@ class axiWriteAgent(Agent):
         self.message = axi2uiWriteMessage(bundle)
         self.queue = []
         self.wioDelay = 0
+        self.awioDelay = 0
+        self.bioDelay = 0
+        self.waitForWready = 0
 
     def setWioDelay(self, delay):
         self.wioDelay = delay
+        
+    def setAwioDelay(self, delay):
+        self.awioDelay = delay
+        
+    def setBioDelay(self, delay):
+        self.bioDelay = delay
+    
+    def setWaitForWready(self, value):
+        self.waitForWready = value
 
     @driver_method()
     async def handleAwio(self, port: dict):
@@ -36,6 +48,8 @@ class axiWriteAgent(Agent):
         #     "awqos": 0,
         #     "awvalid": 1
         # }
+        if self.awioDelay:
+                await self.bundle.step(self.awioDelay)
         self.bundle.assign(port)
         await Value(self.bundle.awio.awready, 1)
         for item in self.queue:
@@ -77,6 +91,8 @@ class axiWriteAgent(Agent):
 
             if self.wioDelay:
                 await self.bundle.step(self.wioDelay)
+            if self.waitForWready:
+                await Value(self.bundle.wio.wready, 1, 0)   # this may cause deadlock, we just test it anyhow
             # set data
             self.bundle.assign(port)
             # await self.bundle.step(1)
@@ -144,6 +160,8 @@ class axiWriteAgent(Agent):
                     'bready': 1
                 }
             }
+            if self.bioDelay:
+                await self.bundle.step(self.bioDelay)
             self.bundle.assign(port)
             await Value(self.bundle.bio.bvalid, 1)
             item[3] = 1

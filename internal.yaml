@@ -12,6 +12,14 @@ osmc_axi_top.u_axi_read.r_axi_consis_table:
   - "reg [4:0] axi_ptr"
   - "reg [4:0] ui_ptr"
 
+osmc_axi_top.u_axi_write:
+  - "wire _u_axi_aw_fifol1_io_fifo_wio_full"   #{1'h0, addr0, burst, len, size, qos}
+  - "wire _u_axi_aw_fifol2_io_fifo_wio_full"   #_u_axi_write_burst_clip_io_fifol2_awwio_wdata, !!! UI WRITE CMD !!!
+  - "wire _u_axi_w_fifol1_io_fifo_wio_full"   #{io_axi_wio_wdata, io_axi_wio_wstrb, io_axi_wio_wlast}
+  - "wire _u_axi_w_fifol2_io_fifo_wio_full"   #_u_axi_write_burst_clip_io_fifol2_wwio_wdata, !!! UI WRITE DATA !!!
+  - "wire _u_axi_wb_fifo_io_fifo_wio_full"   #{io_axi_wio_wid, io_axi_wio_wuser}
+  - "wire _u_axi_awb_fifo_out_io_fifo_wio_full"   #io_axi_awio_awready_0 & io_axi_awio_awvalid
+
 osmc_axi_top.u_axi_write.w_axi_consis_table:
   - "reg [4:0] axi_ptr"
   - "reg [4:0] ui_ptr"

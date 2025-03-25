@@ -94,10 +94,18 @@ class uiWriteAgent(Agent):
         self.memory = memory
         self.queue = []
         self.wioDelay = 0
+        self.awioDelay = 0
+        self.waitForAwvalid = 0
         self.writeConsis = writeConsis
 
     def setWioDelay(self, delay):
         self.wioDelay = delay
+        
+    def setAwioDelay(self, delay):
+        self.awioDelay = delay
+        
+    def setWaitForAwvalid(self, value):
+        self.waitForAwvalid = value
 
     @driver_method()
     async def handleAwio(self):
@@ -110,6 +118,10 @@ class uiWriteAgent(Agent):
                     "ready": 1
                 }
             }
+            if self.awioDelay > 0:
+                await self.bundle.step(self.awioDelay)
+            if self.waitForAwvalid:
+                await Value(self.bundle.awio.valid, 1, 0)
             self.bundle.assign(port)
             await Value(self.bundle.awio.valid, 1)
             self.queue.append([self.bundle.awio.bits_addr.value, 0, 0, 0, 0, self.bundle.awio.bits_token.value])

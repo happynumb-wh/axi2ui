@@ -21,7 +21,7 @@ test:
 	LD_PRELOAD=$(LD_PRELOAD):$(AXI2UI_DIR)/_UT_$(TOP_MODULE).so python3 $(SRC_DIR)/main.py $(TRACE_FILE)
 
 run:
-	pytest --toffee-report -sv $(SRC_DIR) -n$(PYTEST_THREADS)
+	pytest --toffee-report -sv $(SRC_DIR) -n$(PYTEST_THREADS) -W ignore::DeprecationWarning
 
 clean:
 	rm -rf $(AXI2UI_DIR)
