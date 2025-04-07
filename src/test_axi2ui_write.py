@@ -9,178 +9,254 @@ import toffee
 import sys
 import os
 import tqdm
+import asyncio
 
 
 """
-Sequence Write test
-"""
-@toffee_test.testcase
-async def test_axi2uiSequenceWrite(axi2ui_Env: axi2uiEnv):
-    await axi2ui_Env.reset()
-
-    # axi2ui_Env.axiWriteAgent.setWioDelay(100)
-    toffee.create_task(axi2ui_Env.envDeamon())
-    addr = 0x10000000
-    burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
-    for i in range(8192):
-        await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, 0x5, 0x2)
-        addr += 0x100
-    
-    await axi2ui_Env.Finish()
-
-
-"""
-Random Write test
+Trace test
 """
 @toffee_test.testcase
-async def test_axi2uiRandomWrite(axi2ui_Env: axi2uiEnv):
-    await axi2ui_Env.reset()
-    
-    # axi2ui_Env.axiWriteAgent.setWioDelay(100)
-    toffee.create_task(axi2ui_Env.envDeamon())
-    addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
-    burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
-    for i in range(8192):
-        await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
-        addr += 0x100
-    
-    await axi2ui_Env.Finish()
-
-
-"""
-axi awio: awready signal test
-"""
-@toffee_test.testcase
-async def test_axi_awready(axi2ui_Env: axi2uiEnv):
+async def test_axi2uiTrace(axi2ui_Env: axi2uiEnv):
     await axi2ui_Env.reset()
     
     toffee.create_task(axi2ui_Env.envDeamon())
-    
-    # awready is set 1 before awvalid
-    axi2ui_Env.axiWriteAgent.setAwioDelay(1000)   # let axi delay response to make awready 1 and awvalid 0 easily
-    addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
-    burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
-    for i in tqdm.trange(1024):
-        # await Value(axi2ui_Env.axiWriteAgent.bundle.awio.awready, 1)   # this may cause deadlock, we test it anyhow
-        await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
-        addr += 0x100
-    
-    # awready is set 1 after awvalid
-    axi2ui_Env.axiWriteAgent.setAwioDelay(0)
-    axi2ui_Env.uiWriteAgent.setAwioDelay(1000)   # let ui delay response to make awready 0 and awvalid 1 easily
-    addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
-    burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
-    for i in tqdm.trange(1024):
-        await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
-        addr += 0x100
-    
-    # awready and awvalid is set 1 at the same cycle
-    axi2ui_Env.axiWriteAgent.setAwioDelay(0)
-    axi2ui_Env.uiWriteAgent.setAwioDelay(0)
-    addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
-    burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
-    for i in tqdm.trange(8192):
-        await Value(axi2ui_Env.axiWriteAgent.bundle.awio.awready, 1, 0)   # this may cause deadlock, we test it anyhow
-        await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
-        addr += 0x100
-    
+    path = "./test/data/trace"
+    files = os.listdir(path)
+    for file in files:
+        full_path = path+"/"+file
+        if not os.path.isdir(full_path):
+            with open(full_path, "r") as f:
+                lines = f.readlines()
+                full_times = len(lines)
+                f.seek(0, os.SEEK_SET)
+                # for tqdm_lines in tqdm.tqdm(range(full_times//1000)):
+                for tqdm_lines in tqdm.trange(full_times//1):
+                    line = lines[tqdm_lines]
+                    if "R" in line:
+                        addr = line.split(" ")[-1]
+                        try:
+                            await asyncio.wait_for(axi2ui_Env.axiReadAgent.Read(int(addr, 16), 1, 0x5, 0x2), timeout=100)
+                        except asyncio.TimeoutError:
+                            assert False, 'Timeout: file %s, line %d: read %s' % (full_path, tqdm_lines, addr)
+                    elif "W" in line:
+                        addr = line.split(" ")[-1]
+                        try:
+                            await asyncio.wait_for(axi2ui_Env.axiWriteAgent.Write(int(addr, 16), 1, 0x5, 0x2), timeout=100)
+                        except asyncio.TimeoutError:
+                            for itemWrite in axi2ui_Env.uiWriteAgent.queue:
+                                if itemWrite[1] == 1 and itemWrite[2] == 0:
+                                    print(f"uiWriteAgent item addr: {itemWrite[1]:#0x}, token: {itemWrite[-1]:#0x}")
+                                    break
+                            wtoken = itemWrite[0] & ~(0x1 << 9)
+                            wflag = itemWrite[0] & 0x1 << 9
+                            for itemRead in reversed(axi2ui_Env.uiReadAgent.queue):
+                                if itemRead[1] == 1 and itemRead[2] == 0:
+                                    rtoken = itemRead[-1] & ~(0x1 << 9)
+                                    rflag =  itemRead[-1] & 0x1 << 9
+                                    if rflag == wflag:
+                                        # flag equal, smaller is older, wait it
+                                        if rtoken > wtoken:
+                                            netbh = 0
+                                            break
+                                        else:
+                                            print(f"not expected to be here")
+                                            netbh = 1
+                                            break
+                    
+                                    else:
+                                        # flag not equal, larger is older, wait it
+                                        if rtoken < wtoken:
+                                            netbh = 0
+                                            break
+                                        else:
+                                            print(f"not expected to be here")
+                                            netbh = 1
+                                            break
+                            else:
+                                print(f"not expected to be here")
+                                netbh = 1
+                            assert False, 'Timeout: file %s, line %d: write %s, writeConsisResult: %d, writeConsisToken: %x, writeConsisAddr: %x, readToken: %x, readAddr: %x, netbh: %d' \
+                                % (full_path, tqdm_lines, addr, axi2ui_Env.uiWriteAgent.debug_writeConsisResult, \
+                                    axi2ui_Env.uiWriteAgent.debug_writeConsisToken, axi2ui_Env.uiWriteAgent.debug_writeConsisAddr, \
+                                    itemRead[-1], itemRead[0], netbh)
+                    else:
+                        print("Error: Unknow command")
+                        dut.Finish()
+                        exit(0)
+
     await axi2ui_Env.Finish()
 
 
-"""
-axi wio: wready signal test
-"""
-@toffee_test.testcase
-async def test_axi_wready(axi2ui_Env: axi2uiEnv):
-    await axi2ui_Env.reset()
+# """
+# Sequence Write test
+# """
+# @toffee_test.testcase
+# async def test_axi2uiSequenceWrite(axi2ui_Env: axi2uiEnv):
+#     await axi2ui_Env.reset()
+
+#     # axi2ui_Env.axiWriteAgent.setWioDelay(100)
+#     toffee.create_task(axi2ui_Env.envDeamon())
+#     addr = 0x10000000
+#     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
+#     for i in range(8192):
+#         await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, 0x5, 0x2)
+#         addr += 0x100
     
-    toffee.create_task(axi2ui_Env.envDeamon())
-    
-    # wready and wvalid is set 1 at the same cycle
-    axi2ui_Env.axiWriteAgent.setWioDelay(0)
-    axi2ui_Env.uiWriteAgent.setWioDelay(1000)   # let axi delay response to make fifo full, so that wready 0
-    axi2ui_Env.axiWriteAgent.setWaitForWready(True)
-    addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
-    burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
-    for i in tqdm.trange(1024):
-        await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
-        addr += 0x100
-    
-    # wready is set 1 before wvalid
-    axi2ui_Env.axiWriteAgent.setWioDelay(1000)   # let axi delay response to make wready 1 and wvalid 0 easily
-    axi2ui_Env.uiWriteAgent.setWioDelay(0)
-    axi2ui_Env.axiWriteAgent.setWaitForWready(False)
-    addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
-    burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
-    for i in tqdm.trange(1024):
-        # await Value(axi2ui_Env.axiWriteAgent.bundle.wio.wready, 1)   # this may cause deadlock, we test it anyhow
-        await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
-        addr += 0x100
-    
-    # wready is set 1 after wvalid
-    axi2ui_Env.axiWriteAgent.setWioDelay(0)
-    axi2ui_Env.uiWriteAgent.setWioDelay(1000)   # let ui delay response to make wready 0 and wvalid 1 easily
-    addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
-    burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
-    for i in tqdm.trange(1024):
-        await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
-        addr += 0x100
-    
-    await axi2ui_Env.Finish()
+#     await axi2ui_Env.Finish()
 
 
-"""
-axi bio: bvalid signal test
-"""
-@toffee_test.testcase
-async def test_axi_bvalid(axi2ui_Env: axi2uiEnv):
-    await axi2ui_Env.reset()
+# """
+# Random Write test
+# """
+# @toffee_test.testcase
+# async def test_axi2uiRandomWrite(axi2ui_Env: axi2uiEnv):
+#     await axi2ui_Env.reset()
     
-    toffee.create_task(axi2ui_Env.envDeamon())
+#     # axi2ui_Env.axiWriteAgent.setWioDelay(100)
+#     toffee.create_task(axi2ui_Env.envDeamon())
+#     addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
+#     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
+#     for i in range(8192):
+#         await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
+#         addr += 0x100
     
-      # bvalid is set 1 before bready
-    axi2ui_Env.axiWriteAgent.setBioDelay(1000)   # let axi delay response to make bvalid 1 and bready 0 easily
-    addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
-    burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
-    for i in tqdm.trange(1024):
-        # await Value(axi2ui_Env.axiWriteAgent.bundle.awio.wready, 1)   # this may cause deadlock, we test it anyhow
-        await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
-        addr += 0x100
-    
-    # bvalid and bready is set 1 at the same cycle
-    axi2ui_Env.axiWriteAgent.setBioDelay(0)
-    addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
-    burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
-    for i in tqdm.trange(1024):
-        await Value(axi2ui_Env.axiWriteAgent.bundle.bio.bvalid, 1, 0)   # this may cause deadlock, we test it anyhow
-        await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
-        addr += 0x100
-    
-    await axi2ui_Env.Finish()
+#     await axi2ui_Env.Finish()
 
 
-# all ui_* cover points are covered during test_axi_* except ui_awvalid_with_awready,
-# so we test it lonely
+# """
+# axi awio: awready signal test
+# """
+# @toffee_test.testcase
+# async def test_axi_awready(axi2ui_Env: axi2uiEnv):
+#     await axi2ui_Env.reset()
     
-"""
-ui awio: awvalid signal test
-"""
-@toffee_test.testcase
-async def test_ui_awvalid(axi2ui_Env: axi2uiEnv):
-    await axi2ui_Env.reset()
+#     toffee.create_task(axi2ui_Env.envDeamon())
     
-    toffee.create_task(axi2ui_Env.envDeamon())
+#     # awready is set 1 before awvalid
+#     axi2ui_Env.axiWriteAgent.setAwioDelay(1000)   # let axi delay response to make awready 1 and awvalid 0 easily
+#     addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
+#     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
+#     for i in tqdm.trange(1024):
+#         # await Value(axi2ui_Env.axiWriteAgent.bundle.awio.awready, 1)   # this may cause deadlock, we test it anyhow
+#         await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
+#         addr += 0x100
     
-    # awvalid and awready is set 1 at the same cycle
-    axi2ui_Env.axiWriteAgent.setAwioDelay(1000)   # let axi delay response to make ui_awvalid 0 easily
-    axi2ui_Env.uiWriteAgent.setWaitForAwvalid(True)
-    addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
-    burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
-    for i in tqdm.trange(1024):
-        await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
-        addr += 0x100
+#     # awready is set 1 after awvalid
+#     axi2ui_Env.axiWriteAgent.setAwioDelay(0)
+#     axi2ui_Env.uiWriteAgent.setAwioDelay(1000)   # let ui delay response to make awready 0 and awvalid 1 easily
+#     addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
+#     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
+#     for i in tqdm.trange(1024):
+#         await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
+#         addr += 0x100
     
-    await axi2ui_Env.Finish()
+#     # awready and awvalid is set 1 at the same cycle
+#     axi2ui_Env.axiWriteAgent.setAwioDelay(0)
+#     axi2ui_Env.uiWriteAgent.setAwioDelay(0)
+#     addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
+#     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
+#     for i in tqdm.trange(8192):
+#         await Value(axi2ui_Env.axiWriteAgent.bundle.awio.awready, 1, 0)   # this may cause deadlock, we test it anyhow
+#         await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
+#         addr += 0x100
+    
+#     await axi2ui_Env.Finish()
+
+
+# """
+# axi wio: wready signal test
+# """
+# @toffee_test.testcase
+# async def test_axi_wready(axi2ui_Env: axi2uiEnv):
+#     await axi2ui_Env.reset()
+    
+#     toffee.create_task(axi2ui_Env.envDeamon())
+    
+#     # wready and wvalid is set 1 at the same cycle
+#     axi2ui_Env.axiWriteAgent.setWioDelay(0)
+#     axi2ui_Env.uiWriteAgent.setWioDelay(1000)   # let axi delay response to make fifo full, so that wready 0
+#     axi2ui_Env.axiWriteAgent.setWaitForWready(True)
+#     addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
+#     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
+#     for i in tqdm.trange(1024):
+#         await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
+#         addr += 0x100
+    
+#     # wready is set 1 before wvalid
+#     axi2ui_Env.axiWriteAgent.setWioDelay(1000)   # let axi delay response to make wready 1 and wvalid 0 easily
+#     axi2ui_Env.uiWriteAgent.setWioDelay(0)
+#     axi2ui_Env.axiWriteAgent.setWaitForWready(False)
+#     addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
+#     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
+#     for i in tqdm.trange(1024):
+#         # await Value(axi2ui_Env.axiWriteAgent.bundle.wio.wready, 1)   # this may cause deadlock, we test it anyhow
+#         await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
+#         addr += 0x100
+    
+#     # wready is set 1 after wvalid
+#     axi2ui_Env.axiWriteAgent.setWioDelay(0)
+#     axi2ui_Env.uiWriteAgent.setWioDelay(1000)   # let ui delay response to make wready 0 and wvalid 1 easily
+#     addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
+#     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
+#     for i in tqdm.trange(1024):
+#         await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
+#         addr += 0x100
+    
+#     await axi2ui_Env.Finish()
+
+
+# """
+# axi bio: bvalid signal test
+# """
+# @toffee_test.testcase
+# async def test_axi_bvalid(axi2ui_Env: axi2uiEnv):
+#     await axi2ui_Env.reset()
+    
+#     toffee.create_task(axi2ui_Env.envDeamon())
+    
+#       # bvalid is set 1 before bready
+#     axi2ui_Env.axiWriteAgent.setBioDelay(1000)   # let axi delay response to make bvalid 1 and bready 0 easily
+#     addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
+#     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
+#     for i in tqdm.trange(1024):
+#         # await Value(axi2ui_Env.axiWriteAgent.bundle.awio.wready, 1)   # this may cause deadlock, we test it anyhow
+#         await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
+#         addr += 0x100
+    
+#     # bvalid and bready is set 1 at the same cycle
+#     axi2ui_Env.axiWriteAgent.setBioDelay(0)
+#     addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
+#     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
+#     for i in tqdm.trange(1024):
+#         await Value(axi2ui_Env.axiWriteAgent.bundle.bio.bvalid, 1, 0)   # this may cause deadlock, we test it anyhow
+#         await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
+#         addr += 0x100
+    
+#     await axi2ui_Env.Finish()
+
+
+# # all ui_* cover points are covered during test_axi_* except ui_awvalid_with_awready,
+# # so we test it lonely
+    
+# """
+# ui awio: awvalid signal test
+# """
+# @toffee_test.testcase
+# async def test_ui_awvalid(axi2ui_Env: axi2uiEnv):
+#     await axi2ui_Env.reset()
+    
+#     toffee.create_task(axi2ui_Env.envDeamon())
+    
+#     # awvalid and awready is set 1 at the same cycle
+#     axi2ui_Env.axiWriteAgent.setAwioDelay(1000)   # let axi delay response to make ui_awvalid 0 easily
+#     axi2ui_Env.uiWriteAgent.setWaitForAwvalid(True)
+#     addr = random.randint(0x10000000, 2**mcparam.AXI_ADDRW - 1) & 0xFFFFFFFFFFFFFFc0
+#     burst_length = mcparam.UI_DATAW // mcparam.AXI_DATAW
+#     for i in tqdm.trange(1024):
+#         await axi2ui_Env.axiWriteAgent.Write(addr, burst_length - 1, BURST32, 0x2)
+#         addr += 0x100
+    
+#     await axi2ui_Env.Finish()
 
 
 

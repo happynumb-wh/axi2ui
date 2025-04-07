@@ -1,6 +1,9 @@
 .vscode
 *.txt
 *.simple
+# trace
+*.trace
+*.trc
 __pycache__
 # picker folder
 axi2ui

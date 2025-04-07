@@ -99,6 +99,10 @@ class uiWriteAgent(Agent):
         self.awioRandomDelay = False
         self.waitForAwvalid = 0
         self.writeConsis = writeConsis
+        
+        self.debug_writeConsisResult = False   # for debug
+        self.debug_writeConsisToken = self.bundle.awio.bits_token.value   # for debug
+        self.debug_writeConsisAddr = self.bundle.awio.bits_addr.value   # for debug
 
     def setWioDelay(self, delay, random=False):
         self.wioDelay = delay
@@ -162,7 +166,11 @@ class uiWriteAgent(Agent):
                     await self.bundle.step(self.wioDelay)
             
             while self.writeConsis(item[-1]):
+                self.debug_writeConsisResult = True   # for debug
+                self.debug_writeConsisToken = item[-1]   # for debug
+                self.debug_writeConsisAddr = item[0]   # for debug
                 await self.bundle.step(1)
+            self.debug_writeConsisResult = False   # for debug
             
             self.bundle.assign(port)
             await Value(self.bundle.wio.valid, 1)
