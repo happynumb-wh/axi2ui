@@ -27309,22 +27309,11 @@ module osmc_axi_token(
   reg        ar_fullflag;
   wire       aw_full = &aw_counter;
   wire       ar_full = &ar_counter;
-  reg        aw_fullflag_REG;
-  reg        ar_fullflag_REG;
   wire [1:0] _GEN = {aw_fullflag, ar_fullflag};
   wire       full_flag = ~(_GEN == 2'h0 | (&_GEN)) & (_GEN == 2'h1 | _GEN == 2'h2);
-  wire [1:0] _GEN_0 = {aw_full, ar_full};
-  wire       full_keep =
-    ~(_GEN_0 == 2'h0 | (&_GEN_0)) & (_GEN_0 == 2'h1 | _GEN_0 == 2'h2);
-  reg        full_keep_reg;
-  wire [9:0] _GEN_1 = {1'h0, aw_counter};
-  wire [9:0] _GEN_2 = {1'h0, ar_counter};
-  wire [9:0] _counter_sum_T_2 = _GEN_1 + _GEN_2;
-  wire [9:0] _full_counter_sum_T_2 = _GEN_1 + _GEN_2 - 10'h200;
-  wire       use_0 = full_keep_reg & full_keep;
-  wire [9:0] _ar_token_nxt_T = use_0 ? _counter_sum_T_2 : _full_counter_sum_T_2;
-  wire [9:0] _ar_token_nxt_T_1 = use_0 ? _full_counter_sum_T_2 : _counter_sum_T_2;
-  assign ar_token_nxt = full_flag ? _ar_token_nxt_T : _ar_token_nxt_T_1;
+  wire [9:0] _GEN_0 = {1'h0, aw_counter};
+  wire [9:0] _GEN_1 = {1'h0, ar_counter};
+  assign ar_token_nxt = full_flag ? _GEN_1 + _GEN_0 - 10'h200 : _GEN_1 + _GEN_0;
   always @(posedge clock) begin
     if (reset) begin
       aw_counter <= 9'h0;
@@ -27337,14 +27326,11 @@ module osmc_axi_token(
         aw_counter <= aw_counter + 9'h1;
       if (io_token_countio_token_aren)
         ar_counter <= ar_counter + 9'h1;
-      aw_fullflag <= aw_full & aw_fullflag_REG ^ aw_fullflag;
-      ar_fullflag <= ar_full & ar_fullflag_REG ^ ar_fullflag;
+      aw_fullflag <= aw_full & io_token_countio_token_awen ^ aw_fullflag;
+      ar_fullflag <= ar_full & io_token_countio_token_aren ^ ar_fullflag;
     end
     aw_en_reg <= io_token_countio_token_awen;
     ar_en_reg <= io_token_countio_token_aren;
-    aw_fullflag_REG <= io_token_countio_token_awen;
-    ar_fullflag_REG <= io_token_countio_token_aren;
-    full_keep_reg <= full_keep;
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_
     `ifdef FIRRTL_BEFORE_INITIAL
@@ -27363,9 +27349,6 @@ module osmc_axi_token(
         ar_en_reg = _RANDOM[/*Zero width*/ 1'b0][19];
         aw_fullflag = _RANDOM[/*Zero width*/ 1'b0][22];
         ar_fullflag = _RANDOM[/*Zero width*/ 1'b0][23];
-        aw_fullflag_REG = _RANDOM[/*Zero width*/ 1'b0][24];
-        ar_fullflag_REG = _RANDOM[/*Zero width*/ 1'b0][25];
-        full_keep_reg = _RANDOM[/*Zero width*/ 1'b0][26];
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL
@@ -27376,7 +27359,7 @@ module osmc_axi_token(
     .clock             (clock),
     .reset             (reset),
     .io_fifo_wio_wen   (aw_en_reg),
-    .io_fifo_wio_wdata (full_flag ? _ar_token_nxt_T : _ar_token_nxt_T_1),
+    .io_fifo_wio_wdata (full_flag ? _GEN_0 + _GEN_1 - 10'h200 : _GEN_0 + _GEN_1),
     .io_fifo_rio_ren   (~_u_aw_token_fifo_io_fifo_rio_empty),
     .io_fifo_rio_rdata (io_token_io_awtoken),
     .io_fifo_rio_empty (_u_aw_token_fifo_io_fifo_rio_empty)

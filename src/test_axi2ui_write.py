@@ -34,21 +34,25 @@ async def test_axi2uiTrace(axi2ui_Env: axi2uiEnv):
                     line = lines[tqdm_lines]
                     if "R" in line:
                         addr = line.split(" ")[-1]
+                        if int(addr, 16) == 0:
+                            continue
                         try:
                             await asyncio.wait_for(axi2ui_Env.axiReadAgent.Read(int(addr, 16), 1, 0x5, 0x2), timeout=100)
                         except asyncio.TimeoutError:
                             assert False, 'Timeout: file %s, line %d: read %s' % (full_path, tqdm_lines, addr)
                     elif "W" in line:
                         addr = line.split(" ")[-1]
+                        if int(addr, 16) == 0:
+                            continue
                         try:
                             await asyncio.wait_for(axi2ui_Env.axiWriteAgent.Write(int(addr, 16), 1, 0x5, 0x2), timeout=100)
                         except asyncio.TimeoutError:
                             for itemWrite in axi2ui_Env.uiWriteAgent.queue:
                                 if itemWrite[1] == 1 and itemWrite[2] == 0:
-                                    print(f"uiWriteAgent item addr: {itemWrite[1]:#0x}, token: {itemWrite[-1]:#0x}")
+                                    print(f"uiWriteAgent item addr: {itemWrite[0]:#0x}, token: {itemWrite[-1]:#0x}")
                                     break
-                            wtoken = itemWrite[0] & ~(0x1 << 9)
-                            wflag = itemWrite[0] & 0x1 << 9
+                            wtoken = itemWrite[-1] & ~(0x1 << 9)
+                            wflag = itemWrite[-1] & 0x1 << 9
                             for itemRead in reversed(axi2ui_Env.uiReadAgent.queue):
                                 if itemRead[1] == 1 and itemRead[2] == 0:
                                     rtoken = itemRead[-1] & ~(0x1 << 9)
