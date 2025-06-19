@@ -1,2 +1,1 @@
-./src/axi2ui/osmc_axi_top.v
-./src/axi2ui/osmc_axi_top_top.v
+// $(PWD)/rtl/osmc_axi_top.sv

@@ -8,6 +8,7 @@ import toffee
 import sys
 import os
 import tqdm
+import traceback
 
 
 async def test_top(dut: DUTosmc_axi_top, tfile:str):
@@ -67,7 +68,20 @@ if __name__ == "__main__":
         print("No trace file")
         exit(1)
     toffee.setup_logging(toffee.WARNING)
-    dut = DUTosmc_axi_top()
+    
+    # dut = DUTosmc_axi_top()
+    # 仅vcs时, 向DUTosmc_axi_top传参
+    cov_dir = os.path.join(os.getcwd(), "cov")
+    try:
+        # dut = DUTmc_wrapper(f"+trace_file={sys.argv[1]}")
+        dut = DUTosmc_axi_top([f"+trace_file={sys.argv[1]}",
+                             "-cm", "line+cond+fsm+tgl",
+                             "-cm_name", "simv",
+                             "-cm_dir", cov_dir])
+    except Exception as e:
+        print(f"Exception in create_dut: {e}")
+        traceback.print_exc()
+    
     dut.InitClock("clock")
     
     dut.reset.AsImmWrite()

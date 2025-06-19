@@ -16,8 +16,11 @@ xsim.dir
 xvlog.pb
 reports
 verdiLog
+*.log
 ucli.key
 novas_dump.*
 novas.*
 marker.rpt
 signal.rc
+*.vdb
+rtl/axi2ui_filelist.f

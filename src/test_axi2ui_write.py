@@ -20,7 +20,7 @@ async def test_axi2uiTrace(axi2ui_Env: axi2uiEnv):
     await axi2ui_Env.reset()
     
     toffee.create_task(axi2ui_Env.envDeamon())
-    path = "./test/data/trace"
+    path = "./test/data/trace_1/nanhu-piece/translated_trace"
     files = os.listdir(path)
     for file in files:
         full_path = path+"/"+file
@@ -37,6 +37,7 @@ async def test_axi2uiTrace(axi2ui_Env: axi2uiEnv):
                         if int(addr, 16) == 0:
                             continue
                         try:
+                            # continue
                             await asyncio.wait_for(axi2ui_Env.axiReadAgent.Read(int(addr, 16), 1, 0x5, 0x2), timeout=100)
                         except asyncio.TimeoutError:
                             assert False, 'Timeout: file %s, line %d: read %s' % (full_path, tqdm_lines, addr)
@@ -45,44 +46,46 @@ async def test_axi2uiTrace(axi2ui_Env: axi2uiEnv):
                         if int(addr, 16) == 0:
                             continue
                         try:
+                            # continue
                             await asyncio.wait_for(axi2ui_Env.axiWriteAgent.Write(int(addr, 16), 1, 0x5, 0x2), timeout=100)
                         except asyncio.TimeoutError:
-                            for itemWrite in axi2ui_Env.uiWriteAgent.queue:
-                                if itemWrite[1] == 1 and itemWrite[2] == 0:
-                                    print(f"uiWriteAgent item addr: {itemWrite[0]:#0x}, token: {itemWrite[-1]:#0x}")
-                                    break
-                            wtoken = itemWrite[-1] & ~(0x1 << 9)
-                            wflag = itemWrite[-1] & 0x1 << 9
-                            for itemRead in reversed(axi2ui_Env.uiReadAgent.queue):
-                                if itemRead[1] == 1 and itemRead[2] == 0:
-                                    rtoken = itemRead[-1] & ~(0x1 << 9)
-                                    rflag =  itemRead[-1] & 0x1 << 9
-                                    if rflag == wflag:
-                                        # flag equal, smaller is older, wait it
-                                        if rtoken > wtoken:
-                                            netbh = 0
-                                            break
-                                        else:
-                                            print(f"not expected to be here")
-                                            netbh = 1
-                                            break
+                            # for itemWrite in axi2ui_Env.uiWriteAgent.queue:
+                            #     if itemWrite[1] == 1 and itemWrite[2] == 0:
+                            #         print(f"uiWriteAgent item addr: {itemWrite[0]:#0x}, token: {itemWrite[-1]:#0x}")
+                            #         break
+                            # wtoken = itemWrite[-1] & ~(0x1 << 9)
+                            # wflag = itemWrite[-1] & 0x1 << 9
+                            # for itemRead in reversed(axi2ui_Env.uiReadAgent.queue):
+                            #     if itemRead[1] == 1 and itemRead[2] == 0:
+                            #         rtoken = itemRead[-1] & ~(0x1 << 9)
+                            #         rflag =  itemRead[-1] & 0x1 << 9
+                            #         if rflag == wflag:
+                            #             # flag equal, smaller is older, wait it
+                            #             if rtoken > wtoken:
+                            #                 netbh = 0
+                            #                 break
+                            #             else:
+                            #                 print(f"not expected to be here")
+                            #                 netbh = 1
+                            #                 break
                     
-                                    else:
-                                        # flag not equal, larger is older, wait it
-                                        if rtoken < wtoken:
-                                            netbh = 0
-                                            break
-                                        else:
-                                            print(f"not expected to be here")
-                                            netbh = 1
-                                            break
-                            else:
-                                print(f"not expected to be here")
-                                netbh = 1
-                            assert False, 'Timeout: file %s, line %d: write %s, writeConsisResult: %d, writeConsisToken: %x, writeConsisAddr: %x, readToken: %x, readAddr: %x, netbh: %d' \
-                                % (full_path, tqdm_lines, addr, axi2ui_Env.uiWriteAgent.debug_writeConsisResult, \
-                                    axi2ui_Env.uiWriteAgent.debug_writeConsisToken, axi2ui_Env.uiWriteAgent.debug_writeConsisAddr, \
-                                    itemRead[-1], itemRead[0], netbh)
+                            #         else:
+                            #             # flag not equal, larger is older, wait it
+                            #             if rtoken < wtoken:
+                            #                 netbh = 0
+                            #                 break
+                            #             else:
+                            #                 print(f"not expected to be here")
+                            #                 netbh = 1
+                            #                 break
+                            # else:
+                            #     print(f"not expected to be here")
+                            #     netbh = 1
+                            # assert False, 'Timeout: file %s, line %d: write %s, writeConsisResult: %d, writeConsisToken: %x, writeConsisAddr: %x, readToken: %x, readAddr: %x, netbh: %d' \
+                            #     % (full_path, tqdm_lines, addr, axi2ui_Env.uiWriteAgent.debug_writeConsisResult, \
+                            #         axi2ui_Env.uiWriteAgent.debug_writeConsisToken, axi2ui_Env.uiWriteAgent.debug_writeConsisAddr, \
+                            #         itemRead[-1], itemRead[0], netbh)
+                            assert False, 'Timeout: file %s, line %d: write %s' % (full_path, tqdm_lines, addr)
                     else:
                         print("Error: Unknow command")
                         dut.Finish()
@@ -377,7 +380,7 @@ async def axi2ui_Env(toffee_request: toffee_test.ToffeeRequest):
     toffee.setup_logging(toffee.WARNING)
     dut = toffee_request.create_dut(DUTosmc_axi_top)
     toffee.start_clock(dut)
-    toffee_request.add_cov_groups(adder_cover_point(dut))
+    # toffee_request.add_cov_groups(adder_cover_point(dut))
     dut.InitClock("clock")
     # axi bundle
     axiBundle = axiMasterBundle()
