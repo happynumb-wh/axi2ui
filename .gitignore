@@ -23,4 +23,5 @@ novas.*
 marker.rpt
 signal.rc
 *.vdb
+vdCovLog
 rtl/axi2ui_filelist.f
