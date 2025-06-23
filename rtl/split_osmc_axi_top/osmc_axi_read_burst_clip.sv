@@ -86,7 +86,6 @@ module osmc_axi_read_burst_clip(
   wire              _data_last_T = burst_counter == 9'h0;
   wire              io_cmd_fifo_rio_ren_0 = _data_last_T & ~io_cmd_fifo_rio_empty;
   wire              _io_fifol1_rwio_wen_T_2 = io_rrob_io_rready_0 & io_rrob_io_rvalid;
-  wire              data_last = data_decond & _data_last_T;
   assign io_rrob_io_rready_0 = ~io_fifol1_rwio_full & data_counter == 2'h0;
   assign data_decond = ~io_fifol1_rwio_full & ((|data_counter) | _io_fifol1_rwio_wen_T_2);
   wire [15:0]       _UiCmdNum_T = {arlen + 8'h1, 8'h0} - 16'h1;
@@ -152,12 +151,8 @@ module osmc_axi_read_burst_clip(
         data_reg_1 <= io_rrob_io_rdata[511:256];
         data_counter <= 2'h1;
       end
-      else if (data_decond) begin
-        if (data_last)
-          data_counter <= 2'h0;
-        else
-          data_counter <= data_counter - 2'h1;
-      end
+      else if (data_decond)
+        data_counter <= 2'h0;
       if (io_cmd_fifo_rio_ren_0)
         burst_counter <= {1'h0, io_cmd_fifo_rio_rdata[10:3]};
       else if (data_decond) begin
@@ -176,7 +171,7 @@ module osmc_axi_read_burst_clip(
     {io_token_inio_artoken, _GEN[_io_fifol2_arwio_wdata_T[3:0]]};
   assign io_fifol1_rwio_wen = data_decond;
   assign io_fifol1_rwio_wdata =
-    {data_last,
+    {data_decond & _data_last_T,
      _io_fifol1_rwio_wen_T_2
        ? io_rrob_io_rdata[255:0]
        : data_counter[0] ? data_reg_1 : data_reg_0};

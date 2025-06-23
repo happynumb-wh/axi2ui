@@ -35,7 +35,7 @@ init-verilator:
 
 init-vcs:
 	picker export --autobuild=false $(RTL_DIR)/$(TOP_MODULE).sv -V '"$(VCS_VFLAG)"' -F 600MHz -w $(PWD)/axi2ui.fsdb --sname $(TOP_MODULE) --tdir $(AXI2UI_DIR) --lang python -e -c --sim vcs --internal $(INTERNAL_FILE)
-	python modify.py $(AXI2UI_DIR)/dut_base.cpp
+	python modify.py
 	$(MAKE) -C $(AXI2UI_DIR)
 
 run:

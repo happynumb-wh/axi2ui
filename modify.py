@@ -15,37 +15,6 @@ output_dir = os.path.join(script_dir, "rtl")
 output_path = os.path.join(output_dir, "axi2ui_filelist.f")
 
 if __name__ == "__main__":
-    assert len(sys.argv) == 2, "This script does not accept any arguments."
-    
-    file_path = sys.argv[1]
-    with open(file_path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-
-    pattern = re.compile(r"^\s*int\s+DutVcsBase::Step\s*\(\s*uint64_t\s+ncycle,\s*bool\s+dump\s*\)")
-
-    modified_lines = []
-    in_function = False
-    bracket_opened = False
-
-    for line in lines:
-        modified_lines.append(line)
-        
-        if pattern.match(line):
-            in_function = True  # 进入目标函数
-            continue
-        
-        if "{" in line:
-            bracket_opened = True        
-        
-        if in_function:
-            if bracket_opened and line.strip():
-                # 在函数体的第一行插入 `ncycle *= 1000; // fs`
-                modified_lines.append("    ncycle *= 1000; // fs\n")
-                in_function = False  # 只插入一次
-    # 写回文件
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.writelines(modified_lines)
-
 
     # 确保 ./rtl 目录存在
     os.makedirs(output_dir, exist_ok=True)

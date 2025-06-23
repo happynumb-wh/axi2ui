@@ -9,7 +9,7 @@ __pycache__
 axi2ui
 # wave
 *.fst
-*.fsdb
+*.fsdb*
 *.dat
 *.hier
 xsim.dir

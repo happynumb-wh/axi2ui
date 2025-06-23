@@ -73,11 +73,9 @@ if __name__ == "__main__":
     # 仅vcs时, 向DUTosmc_axi_top传参
     cov_dir = os.path.join(os.getcwd(), "cov")
     try:
-        # dut = DUTmc_wrapper(f"+trace_file={sys.argv[1]}")
-        dut = DUTosmc_axi_top([f"+trace_file={sys.argv[1]}",
-                             "-cm", "line+cond+fsm+tgl",
-                             "-cm_name", "simv",
-                             "-cm_dir", cov_dir])
+        dut = DUTosmc_axi_top(["-cm", "line+cond+fsm+tgl",
+                               "-cm_name", "simv",
+                               "-cm_dir", cov_dir])
     except Exception as e:
         print(f"Exception in create_dut: {e}")
         traceback.print_exc()

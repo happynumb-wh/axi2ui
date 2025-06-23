@@ -60,8 +60,6 @@ module fwft_sync_fifo_8(
     if (w_addr == 3'h1) begin
       if (w_en)
         memory_1 <= io_fifo_wio_wdata;
-      else
-        memory_1 <= _GEN_0;
     end
     if (w_addr == 3'h2) begin
       if (w_en)
@@ -72,8 +70,6 @@ module fwft_sync_fifo_8(
     if (w_addr == 3'h3) begin
       if (w_en)
         memory_3 <= io_fifo_wio_wdata;
-      else
-        memory_3 <= _GEN_0;
     end
     if (w_addr == 3'h4) begin
       if (w_en)
@@ -84,8 +80,6 @@ module fwft_sync_fifo_8(
     if (w_addr == 3'h5) begin
       if (w_en)
         memory_5 <= io_fifo_wio_wdata;
-      else
-        memory_5 <= _GEN_0;
     end
     if (w_addr == 3'h6) begin
       if (w_en)
@@ -96,8 +90,6 @@ module fwft_sync_fifo_8(
     if (&w_addr) begin
       if (w_en)
         memory_7 <= io_fifo_wio_wdata;
-      else
-        memory_7 <= _GEN_0;
     end
   end // always @(posedge)
   assign io_fifo_wio_full = io_fifo_wio_full_0;

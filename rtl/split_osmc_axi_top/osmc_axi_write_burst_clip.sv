@@ -75,9 +75,7 @@ module osmc_axi_write_burst_clip(
   reg               w_ren_flag;
   wire              io_fifol1_wrio_ren_0 =
     ~io_fifol1_wrio_empty & ~io_fifol2_wwio_full & w_ren_flag;
-  wire [7:0]        _mask_slice_num_T = awlen + 8'h1;
-  wire [15:0]       _UiCmdNum_T = {_mask_slice_num_T, 8'h0} - 16'h1;
-  wire              _GEN_0 = {6'h0, data_counter} >= 8'h2 - _mask_slice_num_T / 8'h2;
+  wire [15:0]       _UiCmdNum_T = {awlen + 8'h1, 8'h0} - 16'h1;
   always @(posedge clock) begin
     if (reset) begin
       awlen <= 8'h0;
@@ -140,17 +138,7 @@ module osmc_axi_write_burst_clip(
         data_counter <= 2'h0;
       else
         data_counter <= data_counter + {1'h0, data_counter_add_cond};
-      if (_mask_slice_num_T[0]) begin
-        if (_GEN_0 & ~(data_counter[0])) begin
-          UI_data_0 <= 256'h0;
-          UI_data_mask_0 <= 32'h0;
-        end
-        if (_GEN_0 & data_counter[0]) begin
-          UI_data_1 <= 256'h0;
-          UI_data_mask_1 <= 32'h0;
-        end
-      end
-      else if (io_fifol1_wrio_ren_0) begin
+      if (io_fifol1_wrio_ren_0) begin
         UI_data_0 <= io_fifol1_wrio_rdata[288:33];
         UI_data_1 <= UI_data_0;
         UI_data_mask_0 <= 32'hFFFFFFFF;
