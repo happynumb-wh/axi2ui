@@ -94,7 +94,8 @@ module osmc_axi_read(
                  io_consis_addr_io_ui_ptr,
   output [31:0]  io_ui_rdcmd_counter,
                  io_axi_rdcmd_counter,
-                 io_ui_rdback_counter
+                 io_ui_rdback_counter,
+  input          io_apb_config_done
 );
 
   reg  [6:0]   rtoken_cnt;
@@ -150,7 +151,7 @@ module osmc_axi_read(
   wire         io_axi_rio_rlast_0 =
     rdata_counter & io_axi_rio_rready & ~_u_axi_r_fifol1_io_fifo_rio_empty;
   wire         io_axi_ario_arready_0 =
-    ~_u_axi_ar_fifol1_io_fifo_wio_full & ~io_rconsis & ~cmd_hold;
+    ~_u_axi_ar_fifol1_io_fifo_wio_full & ~io_rconsis & ~cmd_hold & io_apb_config_done;
   wire [1:0]   _GEN =
     {_u_ui_read_cmd_io_ui_ario_valid & io_ui_ario_ready, _u_axi_rrob_io_cmd_fifo_rio_ren};
   wire         cmd_en = io_axi_ario_arvalid & io_axi_ario_arready_0;

@@ -101,7 +101,8 @@ module osmc_axi_write(
   output [4:0]   io_consis_addr_io_axi_ptr,
                  io_consis_addr_io_ui_ptr,
   output [31:0]  io_ui_wtcmd_counter,
-                 io_axi_wtcmd_counter
+                 io_axi_wtcmd_counter,
+  input          io_apb_config_done
 );
 
   wire         io_axi_bio_bvalid_0;
@@ -152,9 +153,10 @@ module osmc_axi_write(
     io_axi_bio_bvalid_0 & io_axi_bio_bready;
   assign io_axi_awio_awready_0 =
     ~_u_axi_aw_fifol1_io_fifo_wio_full & ~io_wconsis & ~cmd_hold
-    & ~_u_axi_awb_fifo_out_io_fifo_wio_full;
+    & ~_u_axi_awb_fifo_out_io_fifo_wio_full & io_apb_config_done;
   assign io_axi_wio_wready_0 =
-    ~_u_axi_w_fifol1_io_fifo_wio_full & ~_u_axi_wb_fifo_io_fifo_wio_full;
+    ~_u_axi_w_fifol1_io_fifo_wio_full & ~_u_axi_wb_fifo_io_fifo_wio_full
+    & io_apb_config_done;
   assign io_axi_bio_bvalid_0 =
     ~_u_axi_wb_fifo_io_fifo_rio_empty & ~_u_axi_awb_fifo_out_io_fifo_rio_empty;
   wire         cmd_en = io_axi_awio_awvalid & io_axi_awio_awready_0;

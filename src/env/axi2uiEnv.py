@@ -20,6 +20,8 @@ class axi2uiEnv(Env):
         self.handler = []
         # commit switch defalut is 1
         self.deleteCommit = 1
+        
+        self.dut.io_apb_config_done.value = 1
 
     def readConsis(self, token: int):
         '''

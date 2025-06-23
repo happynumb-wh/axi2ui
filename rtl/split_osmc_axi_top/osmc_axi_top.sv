@@ -63,7 +63,8 @@ module osmc_axi_top(
                  io_a2uregio_uiWrCmdCnt,
                  io_a2uregio_uiRbCmdCnt,
   output         io_a2uregio_readyStall,
-  output [7:0]   io_a2uregio_tokenCnt
+  output [7:0]   io_a2uregio_tokenCnt,
+  input          io_apb_config_done
 );
 
   wire        _u_axi_consis_io_consis_io_wconsis;
@@ -311,7 +312,8 @@ module osmc_axi_top(
     .io_consis_addr_io_axi_ptr       (_u_axi_write_io_consis_addr_io_axi_ptr),
     .io_consis_addr_io_ui_ptr        (_u_axi_write_io_consis_addr_io_ui_ptr),
     .io_ui_wtcmd_counter             (io_a2uregio_uiWrCmdCnt),
-    .io_axi_wtcmd_counter            (io_a2uregio_axiWrCmdCnt)
+    .io_axi_wtcmd_counter            (io_a2uregio_axiWrCmdCnt),
+    .io_apb_config_done              (io_apb_config_done)
   );
   osmc_axi_read u_axi_read (
     .clock                           (clock),
@@ -408,7 +410,8 @@ module osmc_axi_top(
     .io_consis_addr_io_ui_ptr        (_u_axi_read_io_consis_addr_io_ui_ptr),
     .io_ui_rdcmd_counter             (io_a2uregio_uiRdCmdCnt),
     .io_axi_rdcmd_counter            (io_a2uregio_axiRdCmdCnt),
-    .io_ui_rdback_counter            (io_a2uregio_uiRbCmdCnt)
+    .io_ui_rdback_counter            (io_a2uregio_uiRbCmdCnt),
+    .io_apb_config_done              (io_apb_config_done)
   );
   osmc_axi_token u_axi_token (
     .clock                       (clock),

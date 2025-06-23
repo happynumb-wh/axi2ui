@@ -6,6 +6,7 @@ WAIVER_DIR 		= $(PWD)/src
 TRACE_DIR 		= $(PWD)/test/data
 TRACE_FILE 		= $(TRACE_DIR)/trace/cactusADM_0_rand100w.txt
 INTERNAL_FILE 	= $(PWD)/internal.yaml
+SPLIT_MODULE	= split_osmc_axi_top
 TOP_MODULE 		= osmc_axi_top
 PYTEST_THREADS = 4
 
@@ -34,7 +35,7 @@ init-verilator:
 	$(MAKE) -C $(AXI2UI_DIR)
 
 init-vcs:
-	picker export --autobuild=false $(RTL_DIR)/$(TOP_MODULE).sv -V '"$(VCS_VFLAG)"' -F 600MHz -w $(PWD)/axi2ui.fsdb --sname $(TOP_MODULE) --tdir $(AXI2UI_DIR) --lang python -e -c --sim vcs --internal $(INTERNAL_FILE)
+	picker export --autobuild=false $(RTL_DIR)/$(SPLIT_MODULE)/$(TOP_MODULE).sv -V '"$(VCS_VFLAG)"' -F 600MHz -w $(PWD)/axi2ui.fsdb --sname $(TOP_MODULE) --tdir $(AXI2UI_DIR) --lang python -e -c --sim vcs --internal $(INTERNAL_FILE)
 	python modify.py
 	$(MAKE) -C $(AXI2UI_DIR)
 
