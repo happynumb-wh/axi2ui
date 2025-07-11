@@ -169,7 +169,7 @@ class axiWriteAgent(Agent):
             await Value(self.bundle.bio.bvalid, 1)
             
             for item in self.queue:
-                if item[0] == self.bundle.bio.bid and item[2] == 1 and item[3] == 1 and item[4] == 0:
+                if item[0] == self.bundle.bio.bid.value and item[2] == 1 and item[3] == 1 and item[4] == 0:
                     break
             else:
                 assert False, "B channel return unmatched bid"
@@ -241,6 +241,8 @@ class axiReadAgent(Agent):
     
     @driver_method()
     async def handleRio(self):
+        debug_new = 1
+        rid = 0
         while True:
             if len(self.queue) == 0:
                 await self.bundle.step(1)
@@ -260,7 +262,7 @@ class axiReadAgent(Agent):
             await Value(self.bundle.rio.rvalid, 1)
             
             for item in self.queue:
-                if item[0] == self.bundle.rio.rid and item[2] == 1 and item[3] == 0:
+                if item[0] == self.bundle.rio.rid.value and item[2] == 1 and item[3] == 0:
                     break       
             else:
                 assert False, "R channel return unmatched rid"
@@ -279,6 +281,13 @@ class axiReadAgent(Agent):
                         item[4] = mcparam.combine_data(data, item[7])
                         # clear rready
                         port['rio']['rready'] = 0  
+                        
+                        # debug: check whether rio is continuous
+                        if debug_new:
+                            rid = self.bundle.rio.rid.value
+                            debug_new = 0
+                        else:
+                            assert self.bundle.rio.rid.value == (rid + 1) % (1 << mcparam.AXI_IDW), "rid is not continuous"
                 else:
                     await Value(self.bundle.rio.rvalid, 1)
                     continue
