@@ -4,7 +4,8 @@ AXI2UI_DIR 		= $(SRC_DIR)/axi2ui
 RTL_DIR 		= $(PWD)/rtl
 WAIVER_DIR 		= $(PWD)/src
 TRACE_DIR 		= $(PWD)/test/data
-TRACE_FILE 		= $(TRACE_DIR)/trace/cactusADM_0_rand100w.txt
+# TRACE_FILE 		= $(TRACE_DIR)/trace/cactusADM_0_rand100w.txt
+TRACE_FILE      = $(TRACE_DIR)/trace_1/nanhu-piece/translated_trace/astar_biglake_1085_trace.txt.simple.drank
 INTERNAL_FILE 	= $(PWD)/internal.yaml
 SPLIT_MODULE	= split_osmc_axi_top
 TOP_MODULE 		= osmc_axi_top
@@ -41,6 +42,8 @@ init-vcs:
 
 run:
 	LD_PRELOAD=$(LD_PRELOAD):$(LD_PRELOAD_ADD) python3 $(SRC_DIR)/main.py $(TRACE_FILE)
+run-debug:
+	LD_PRELOAD=$(LD_PRELOAD):$(LD_PRELOAD_ADD) python3 -m pdb $(SRC_DIR)/main.py $(TRACE_FILE)
 
 test:
 	LD_PRELOAD=$(LD_PRELOAD):$(LD_PRELOAD_ADD) pytest --toffee-report -sv $(SRC_DIR) -W ignore::DeprecationWarning

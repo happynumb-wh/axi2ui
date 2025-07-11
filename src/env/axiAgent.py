@@ -41,11 +41,11 @@ class axiWriteAgent(Agent):
     @driver_method()
     async def handleAwio(self, port: dict):
         '''
-        Queue: [addr, awio, wio, bio, wdata, token, wrlen, wrsize]
+        Queue: [awid, addr, awio, wio, bio, wdata, token, wrlen, wrsize]
         '''
         port['awio']['awvalid'] = 1
         # {
-        #     "awid": 0,
+        #     "awid": awid,
         #     "awaddr": addr,
         #     "awlen": awlen,
         #     "awsize": awsize,
@@ -62,19 +62,19 @@ class axiWriteAgent(Agent):
         self.bundle.assign(port)
         await Value(self.bundle.awio.awready, 1)
         for item in self.queue:
-            if item[1] == 0:
-                item[0] = port['awio']['awaddr']
-                assert item[6] == port['awio']['awlen'] + 1, "Write length not match"
-                assert item[7] == 2**port['awio']['awsize'] * 8, "Write size not match"
+            if item[2] == 0:
+                item[1] = port['awio']['awaddr']
+                assert item[7] == port['awio']['awlen'] + 1, "Write length not match"
+                assert item[8] == 2**port['awio']['awsize'] * 8, "Write size not match"
                 break
         else:
-            item = [port['awio']['awaddr'], 0, 0, 0, 0, 0, port['awio']['awlen'] + 1, 2**port['awio']['awsize'] * 8]
+            item = [port['awio']['awid'], port['awio']['awaddr'], 0, 0, 0, 0, 0, port['awio']['awlen'] + 1, 2**port['awio']['awsize'] * 8]
             self.queue.append(item)
         self.awioRequest += 1
         port['awio']['awvalid'] = 0
         self.bundle.assign(port)
         # Write addr handle ok
-        item[1] = 1
+        item[2] = 1
         # await self.bundle.step(1)
         return item
     
@@ -85,7 +85,6 @@ class axiWriteAgent(Agent):
            
             port = {
                 'wio': {
-                    'wid': 0,
                     'wuser': 0,
                     'wdata': 0,
                     'wstrb': 0,
@@ -111,18 +110,18 @@ class axiWriteAgent(Agent):
             await Value(self.bundle.wio.wready, 1)
             # We get function first
             for item in self.queue:
-                if item[1] == 1 and item[2] == 0:
+                if item[2] == 1 and item[3] == 0:
                     break
                
             else:
-                item = [0, 0, 0, 0, 0, 0, BURST_LENGTH, 2**BURST32 * 8]
+                item = [0, 0, 0, 0, 0, 0, 0, BURST_LENGTH, 2**BURST32 * 8]
                 wioNew = 1  
             
             if wioNew:
                 self.queue.append(item)
             
             data = []
-            length = item[6]
+            length = item[7]
             while True:
                 if len(data) == length:
                     break
@@ -133,8 +132,8 @@ class axiWriteAgent(Agent):
                         port['wio']['wlast'] = 0 
                         port['wio']['wvalid'] = 0
                         assert len(data) == length, "Wlast finish recv data"
-                        item[4] = mcparam.combine_data(data, mcparam.AXI_DATAW)
-                        item[2] = 1
+                        item[5] = mcparam.combine_data(data, mcparam.AXI_DATAW)
+                        item[3] = 1
                     else:
                         # fixme set data
                         port['wio']['wdata'] = random.randint(0, 2**mcparam.AXI_DATAW - 1)
@@ -156,13 +155,6 @@ class axiWriteAgent(Agent):
                 await self.bundle.step(1)
                 continue
             
-            for item in self.queue:
-                if item[1] == 1 and item[2] == 1 and item[3] == 0:
-                    break
-            else:
-                await self.bundle.step(1)
-                continue       
-                 
             port = {
                 'bio': {
                     'bready': 1
@@ -175,16 +167,23 @@ class axiWriteAgent(Agent):
                     await self.bundle.step(self.bioDelay)
             self.bundle.assign(port)
             await Value(self.bundle.bio.bvalid, 1)
-            item[3] = 1
+            
+            for item in self.queue:
+                if item[0] == self.bundle.bio.bid and item[2] == 1 and item[3] == 1 and item[4] == 0:
+                    break
+            else:
+                assert False, "B channel return unmatched bid"
+                 
+            item[4] = 1
             port['bio']['bready'] = 0
             self.bundle.assign(port)
             await self.bundle.step(1)
             
     
-    async def Write(self, awaddr, awlen, awsize, awburst):
+    async def Write(self, awid, awaddr, awlen, awsize, awburst):
         port = {
             'awio': {
-                'awid': 0,
+                'awid': awid,
                 'awaddr': awaddr,
                 'awlen': awlen,
                 'awsize': awsize,
@@ -216,11 +215,11 @@ class axiReadAgent(Agent):
     @driver_method()
     async def handleArio(self, port: dict):
         '''
-        Queue: [addr, ario, rio, rdata, token, arlen, arsize]
+        Queue: [arid, addr, ario, rio, rdata, token, arlen, arsize]
         '''
         port['ario']['arvalid'] = 1
         # {
-        #     "arid": 0,
+        #     "arid": arid,
         #     "araddr": addr,
         #     "arlen": awlen,
         #     "arsize": awsize,
@@ -231,12 +230,12 @@ class axiReadAgent(Agent):
         # }
         self.bundle.assign(port)
         await Value(self.bundle.ario.arready, 1)
-        self.queue.append([port['ario']['araddr'], 0, 0, 0, 0, port['ario']['arlen'] + 1, 2**port['ario']['arsize'] * 8])
+        self.queue.append([port['ario']['arid'], port['ario']['araddr'], 0, 0, 0, 0, port['ario']['arlen'] + 1, 2**port['ario']['arsize'] * 8])
         self.arioRequest += 1
         port['ario']['arvalid'] = 0
         self.bundle.assign(port)
         # Read addr handle ok
-        self.queue[-1][1] = 1
+        self.queue[-1][2] = 1
         return self.queue[-1]
     
     
@@ -247,12 +246,6 @@ class axiReadAgent(Agent):
                 await self.bundle.step(1)
                 continue
             
-            for item in self.queue:
-                if item[1] == 1 and item[2] == 0:
-                    break       
-            else:
-                await self.bundle.step(1)
-                continue       
             port = {
                 'rio': {
                     'rready': 1
@@ -265,18 +258,25 @@ class axiReadAgent(Agent):
             self.bundle.assign(port)
             # await self.bundle.step(1)
             await Value(self.bundle.rio.rvalid, 1)
+            
+            for item in self.queue:
+                if item[0] == self.bundle.rio.rid and item[2] == 1 and item[3] == 0:
+                    break       
+            else:
+                assert False, "R channel return unmatched rid"
+            
             data = []
             # burst times
-            length = item[5]
+            length = item[6]
             while True:
                 if len(data) == length:
                     break
                 if self.bundle.rio.rvalid.value:
                     data.append(self.bundle.rio.rdata.value)
                     if self.bundle.rio.rlast.value:
-                        item[2] = 1                       
+                        item[3] = 1                       
                         # assert len(data) == length, "Rlast finish recv data"
-                        item[3] = mcparam.combine_data(data, item[6])
+                        item[4] = mcparam.combine_data(data, item[7])
                         # clear rready
                         port['rio']['rready'] = 0  
                 else:
@@ -288,10 +288,10 @@ class axiReadAgent(Agent):
 
         
     
-    async def Read(self, araddr, arlen, arsize, arburst):
+    async def Read(self, arid, araddr, arlen, arsize, arburst):
         port = {
             'ario': {
-                'arid': 0,
+                'arid': arid,
                 'araddr': araddr,
                 'arlen': arlen,
                 'arsize': arsize,

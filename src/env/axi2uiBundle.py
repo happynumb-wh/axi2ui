@@ -16,13 +16,12 @@ class axiAwioBundle(Bundle):
 
 # Write data channel
 class axiWioBundle(Bundle):
-    wid, \
     wuser, \
     wdata, \
     wstrb, \
     wlast, \
     wvalid, \
-    wready = Signals(7)
+    wready = Signals(6)
 
 # Wrirtes response channel
 class axiBioBundle(Bundle):
@@ -116,3 +115,12 @@ class uiWriteBundle(Bundle):
 class uiSlaveBundle(Bundle):
     writeBundle = uiWriteBundle()
     readBundle = uiReadBundle()
+
+class axiReadBurstClipBundle(Bundle):
+    io_rrob_io_rvalid, \
+    io_fifol1_rwio_wen, \
+    io_cmd_fifo_rio_ren, \
+    io_cmd_fifo_rio_rdata = Signals(4)
+
+class cornorTestBundle(Bundle):
+    axi_write_burst_clip = axiReadBurstClipBundle().from_prefix("osmc_axi_top_u_axi_read_u_axi_read_burst_clip_")
