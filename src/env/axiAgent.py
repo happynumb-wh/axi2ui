@@ -169,7 +169,7 @@ class axiWriteAgent(Agent):
             await Value(self.bundle.bio.bvalid, 1)
             
             for item in self.queue:
-                if item[0] == self.bundle.bio.bid and item[2] == 1 and item[3] == 1 and item[4] == 0:
+                if item[0] == self.bundle.bio.bid.value and item[2] == 1 and item[3] == 1 and item[4] == 0:
                     break
             else:
                 assert False, "B channel return unmatched bid"
@@ -260,7 +260,7 @@ class axiReadAgent(Agent):
             await Value(self.bundle.rio.rvalid, 1)
             
             for item in self.queue:
-                if item[0] == self.bundle.rio.rid and item[2] == 1 and item[3] == 0:
+                if item[0] == self.bundle.rio.rid.value and item[2] == 1 and item[3] == 0:
                     break       
             else:
                 assert False, "R channel return unmatched rid"
