@@ -17,6 +17,8 @@ osmc_axi_read_rob.sv
 fwft_sync_fifo_9.sv
 fwft_sync_fifo_10.sv
 osmc_axi_read_cmd_buffer.sv
+ram_128x9.sv
+Queue128_UInt9.sv
 osmc_ui_read_cmd.sv
 osmc_axi_read.sv
 fwft_sync_fifo_11.sv
