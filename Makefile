@@ -12,7 +12,7 @@ TOP_MODULE 		= osmc_axi_top
 PYTEST_THREADS = 4
 
 DUT_SO_PATH 	= $(AXI2UI_DIR)/_UT_$(TOP_MODULE).so
-LIBPYTHON_PATH	= /usr/lib/python3.10/config-3.10-x86_64-linux-gnu/libpython3.10.so
+LIBPYTHON_PATH	= $(shell python -c "import sysconfig; print(sysconfig.get_config_var('LIBPL') + '/' + sysconfig.get_config_var('LDLIBRARY'))")
 LD_PRELOAD_ADD	=$(DUT_SO_PATH):$(LIBPYTHON_PATH)
 
 VCS_VFLAG	:= '-kdb' \

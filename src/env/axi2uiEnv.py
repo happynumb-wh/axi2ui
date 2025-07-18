@@ -13,8 +13,8 @@ class axi2uiEnv(Env):
         self.readBundle = axiBundle.readBundle
         self.writeBundle = axiBundle.writeBundle
         self.memory = scoreBord()
-        self.axiReadAgent = axiReadAgent(axiBundle.readBundle)
-        self.axiWriteAgent = axiWriteAgent(axiBundle.writeBundle)
+        self.axiReadAgent = axiReadAgent(axiBundle.readBundle, dut)
+        self.axiWriteAgent = axiWriteAgent(axiBundle.writeBundle, dut)
         self.uiReadAgent = uiReadAgent(uiBundle.readBundle, self.memory, self.readConsis)
         self.uiWriteAgent = uiWriteAgent(uiBundle.writeBundle, self.memory, self.writeConsis)
         self.dut = dut
@@ -95,8 +95,8 @@ class axi2uiEnv(Env):
         assert countUI <= countAXI, "UI request should less than AXI request"      
         for i in range(countUI - 1, countAXI):
             # AXI request is more than UI request
-            axiAddrBase = axiqueue[i][0]
-            axiAddrEnd = axiqueue[i][0] + UI_DATAW // 8
+            axiAddrBase = axiqueue[i][1]
+            axiAddrEnd = axiqueue[i][1] + UI_DATAW // 8
             # Address is overlap
             if addrBase >= axiAddrBase and addrBase <= axiAddrEnd or \
                 addrEnd >= axiAddrBase and addrEnd <= axiAddrEnd:
@@ -163,15 +163,15 @@ class axi2uiEnv(Env):
             axiItem = self.axiReadAgent.queue[idx]
             uiItem = self.uiReadAgent.queue[idx]
             
-            if axiItem[3] and axiItem[2] and uiItem[1] and uiItem[2]:
+            if axiItem[ReadIndex.ARIO] and axiItem[ReadIndex.RIO] and uiItem[1] and uiItem[2]:
                 # assert axiItem[1] == uiItem[0], "Read address not match"
-                if axiItem[1] != uiItem[0]:
-                    print(f"Read address not match: axi: {hex(axiItem[1])} ui: {hex(uiItem[1])}, idx: {self.axiReadAgent.finishRequest}")
+                if axiItem[ReadIndex.ADDR] != uiItem[0]:
+                    print(f"Read address not match: axi: {hex(axiItem[ReadIndex.ADDR])} ui: {hex(uiItem[1])}, idx: {self.axiReadAgent.finishRequest}")
                     self.dut.Finish()
                     sys.exit(0)
-                if axiItem[4] != uiItem[3]:
-                    print(f"Read data not match: addr: {hex(axiItem[1])} Token: {hex(axiItem[6])}, idx: {self.axiReadAgent.finishRequest}")
-                    print(f"axi: {hex(axiItem[4])} ui: {hex(uiItem[3])}")
+                if axiItem[ReadIndex.RDATA] != uiItem[3]:
+                    print(f"Read data not match: addr: {hex(axiItem[ReadIndex.ADDR])} Token: {hex(axiItem[ReadIndex.TOKEN])}, idx: {self.axiReadAgent.finishRequest}")
+                    print(f"axi: {hex(axiItem[ReadIndex.RDATA])} ui: {hex(uiItem[3])}")
                     self.dut.Finish()
                     exit(0)
                 self.axiReadAgent.finishRequest += 1
@@ -201,15 +201,15 @@ class axi2uiEnv(Env):
             axiItem = self.axiWriteAgent.queue[idx]
             uiItem = self.uiWriteAgent.queue[idx]
             
-            if axiItem[4] and axiItem[3] and axiItem[2] and uiItem[1] and uiItem[2]:
+            if axiItem[WriteIndex.BIO] and axiItem[WriteIndex.WIO] and axiItem[WriteIndex.AWIO] and uiItem[1] and uiItem[2]:
                 # assert axiItem[1] == uiItem[0], "Write address not match"
-                if axiItem[1] != uiItem[0]:
-                    print(f"Write address not match: axi: {hex(axiItem[1])} ui: {hex(uiItem[0])}, idx: {self.axiWriteAgent.finishRequest}")
+                if axiItem[WriteIndex.ADDR] != uiItem[0]:
+                    print(f"Write address not match: axi: {hex(axiItem[WriteIndex.ADDR])} ui: {hex(uiItem[0])}, idx: {self.axiWriteAgent.finishRequest}")
                     self.dut.Finish()
                     sys.exit(0)
-                if axiItem[5] != uiItem[3]:
-                    print(f"Write data not match: addr: {hex(axiItem[1])}, idx: f{self.axiWriteAgent.finishRequest}")
-                    print(f"axi: {hex(axiItem[5])} ui: {hex(uiItem[3])}")
+                if axiItem[WriteIndex.WDATA] != uiItem[3]:
+                    print(f"Write data not match: addr: {hex(axiItem[WriteIndex.ADDR])}, idx: f{self.axiWriteAgent.finishRequest}")
+                    print(f"axi: {hex(axiItem[WriteIndex.WDATA])} ui: {hex(uiItem[3])}")
                     self.dut.Finish()
                     exit(0)
                 self.axiWriteAgent.finishRequest += 1

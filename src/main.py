@@ -34,8 +34,8 @@ async def test_top(dut: DUTosmc_axi_top, tfile:str):
     toffee.create_task(axiEnv.envDeamon())
     
     
-    # axiEnv.uiReadAgent.setRioRandom(1)
-    # axiEnv.uiReadAgent.setRioDelay(100)
+    axiEnv.uiReadAgent.setRioRandom(1)
+    axiEnv.uiReadAgent.setRioDelay(100)
     # axiEnv.uiWriteAgent.setWioDelay(100)
     # axiEnv.axiReadAgent.setRioDelay(20)
     # axiEnv.axiWriteAgent.setWioDelay(20)
@@ -44,45 +44,52 @@ async def test_top(dut: DUTosmc_axi_top, tfile:str):
     # for i in range(10):
     #     await axiEnv.readBundle.step(100000)
     #     print(f"{i}")
-    # print("waiting done")
-    
-    with open(tfile, "r") as f:
-        lines = f.readlines()
-        full_times = len(lines)
-        f.seek(0, os.SEEK_SET)
-        arid = -1
-        awid = -1
-        for tqdm_lines in tqdm.tqdm(range(full_times // 1000)):
-            line = lines[tqdm_lines]
-            if "R" in line:
-                arid = (arid + 1) % (1 << mcparam.AXI_IDW)
-                addr = line.split(" ")[-1]
-                # try:
-                    # continue
-                await axiEnv.axiReadAgent.Read(arid, int(addr, 16), 1, 0x5, 0x2)
-                # except asyncio.TimeoutError:
-                #     assert False, 'Timeout: read %s, uiReadAgent queue lenth: %d' % (addr, len(axiEnv.uiReadAgent.queue))
+    # # print("waiting done")
+    arid = -1
+    for i in range(1000):
+        arid = (arid + 1) % (1 << mcparam.AXI_IDW)
+        await axiEnv.axiReadAgent.Read(arid, 0x1000 + i * 0x100, burst_length - 1, 0x5, 0x2)
+        await axiEnv.readBundle.step(random.randint(0, 1000))
+        print(i)
+        
+        
+    # with open(tfile, "r") as f:
+    #     lines = f.readlines()
+    #     full_times = len(lines)
+    #     f.seek(0, os.SEEK_SET)
+    #     arid = -1
+    #     awid = -1
+    #     for tqdm_lines in tqdm.tqdm(range(full_times)):
+    #         line = lines[tqdm_lines]
+    #         if "R" in line:
+    #             arid = (arid + 1) % (1 << mcparam.AXI_IDW)
+    #             addr = line.split(" ")[-1]
+    #             # try:
+    #                 # continue
+    #             await axiEnv.axiReadAgent.Read(arid, int(addr, 16), 1, 0x5, 0x2)
+    #             # except asyncio.TimeoutError:
+    #             #     assert False, 'Timeout: read %s, uiReadAgent queue lenth: %d' % (addr, len(axiEnv.uiReadAgent.queue))
                 
-            elif "W" in line:
-                awid = (awid + 1) % (1 << mcparam.AXI_IDW)
-                addr = line.split(" ")[-1]
-                # try:
-                    # continue
-                await axiEnv.axiWriteAgent.Write(awid, int(addr, 16), 1, 0x5, 0x2)
-                # except asyncio.TimeoutError:
-                #     assert False, (
-                #         f'Timeout: write 0x{addr}\n'
-                #         f'  uiWriteAgent queue length: {len(axiEnv.uiWriteAgent.queue)}\n'
-                #         f'  uiReadAgent queue length: {len(axiEnv.uiReadAgent.queue)}\n'
-                #         f'  Write consis result: {axiEnv.uiWriteAgent.debug_writeConsisResult}\n'
-                #         f'  Addr: 0x{axiEnv.uiWriteAgent.debug_writeConsisAddr:x}\n'
-                #         f'  Token: 0x{axiEnv.uiWriteAgent.debug_writeConsisToken:x}\n'
-                #         # f'  uiReadAgent queue: {", ".join(f"{item}" for item in axiEnv.uiReadAgent.queue)}'
-                #     )
-            else:
-                print("Error: Unknow command")
-                dut.Finish()
-                exit(0)
+    #         elif "W" in line:
+    #             awid = (awid + 1) % (1 << mcparam.AXI_IDW)
+    #             addr = line.split(" ")[-1]
+    #             # try:
+    #                 # continue
+    #             await axiEnv.axiWriteAgent.Write(awid, int(addr, 16), 1, 0x5, 0x2)
+    #             # except asyncio.TimeoutError:
+    #             #     assert False, (
+    #             #         f'Timeout: write 0x{addr}\n'
+    #             #         f'  uiWriteAgent queue length: {len(axiEnv.uiWriteAgent.queue)}\n'
+    #             #         f'  uiReadAgent queue length: {len(axiEnv.uiReadAgent.queue)}\n'
+    #             #         f'  Write consis result: {axiEnv.uiWriteAgent.debug_writeConsisResult}\n'
+    #             #         f'  Addr: 0x{axiEnv.uiWriteAgent.debug_writeConsisAddr:x}\n'
+    #             #         f'  Token: 0x{axiEnv.uiWriteAgent.debug_writeConsisToken:x}\n'
+    #             #         # f'  uiReadAgent queue: {", ".join(f"{item}" for item in axiEnv.uiReadAgent.queue)}'
+    #             #     )
+    #         else:
+    #             print("Error: Unknow command")
+    #             dut.Finish()
+    #             exit(0)
     
     await axiEnv.Finish()
 
