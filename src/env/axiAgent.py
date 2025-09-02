@@ -292,20 +292,23 @@ class axiReadAgent(Agent):
     async def handleRio(self):
         debug_new = 1
         rid = 0
-        while True:
-            if len(self.queue) == 0:
-                await self.bundle.step(1)
-                continue
-            
-            port = {
+        port = {
                 'rio': {
                     'rready': 1
                 }
             }
+        while True:
+            if len(self.queue) == 0:
+                port['rio']['rready'] = 0
+                self.bundle.assign(port)
+                await self.bundle.step(1)
+                continue
+            
             # Set delay here
             if self.rioDelay:
                 await self.bundle.step(random.randint(1, self.rioDelay))
             
+            port['rio']['rready'] = 1
             self.bundle.assign(port)
             # await self.bundle.step(1)
             await Value(self.bundle.rio.rvalid, 1)
@@ -332,14 +335,15 @@ class axiReadAgent(Agent):
                 if self.bundle.rio.rvalid.value:
                     data.append(self.bundle.rio.rdata.value)
                     if self.bundle.rio.rlast.value:
-                        item[ReadIndex.RIO] = 1                       
                         # assert len(data) == length, "Rlast finish recv data"
                         item[ReadIndex.RDATA] = mcparam.combine_data(data, item[ReadIndex.ARSIZE])
+                        item[ReadIndex.RIO] = 1                       
                         # clear rready
-                        port['rio']['rready'] = 0  
+                        # port['rio']['rready'] = 0  
                         assert item[ReadIndex.ARID] == self.bundle.rio.rid.value, "R channel rid not match"
+                        break
                 else:
-                    await Value(self.bundle.rio.rvalid, 1)
+                    await Value(self.bundle.rio.rvalid, 0)
                     continue
                 
                 self.bundle.assign(port)
