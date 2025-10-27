@@ -219,3 +219,11 @@ def combine_data(data: list, length):
     for i in range(len(data)):
         result |= data[i] << (i * length)
     return result
+
+def split_data(data, length):
+    result = []
+    mask = (1 << length) - 1
+    while data > 0:
+        result.append(data & mask)
+        data >>= length
+    return result
